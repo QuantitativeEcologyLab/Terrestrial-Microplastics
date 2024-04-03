@@ -1,5 +1,4 @@
 
-
 library(raster)
 library(terra) #note: need to be careful about the loading of raster and terra at the same time
 library(ncdf4)
@@ -16,11 +15,11 @@ message("Starting data import.")
 crs_wintri <- "ESRI:53018"
 
 #import soil and HFI
-soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Rasters/HWSD2.bil")
-hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Rasters/ml_hfi_v1_2019.nc")
+soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/HWSD2.bil")
+hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/ml_hfi_v1_2019.nc")
 
 # Download elevation raster (Global)
-Elevation_km <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Rasters")
+Elevation_km <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters")
 
 #Get world boundaries for clipping (not critical, but makes maps nicer looking)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))

@@ -2,7 +2,7 @@
 message("Processing the MP dataset.")
 
 #Import the MP data with coordinates
-MPdf <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Global_MP_R.csv")
+MPdf <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/Global_MP_R.csv")
 
 #projections are easting, northing
 locations <- st_as_sf(MPdf, coords = c("Long", "Lat"), crs="+proj=longlat +datum=WGS84")
