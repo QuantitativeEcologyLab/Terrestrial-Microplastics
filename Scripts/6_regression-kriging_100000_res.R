@@ -7,6 +7,7 @@ library(terra)
 library(sf)
 library(gstat)
 library(tidyverse)
+library(ggplot2)
 
 #----------------------------------------------------------------------
 # Predictions from the GAM
@@ -94,35 +95,42 @@ plot(mp.vg, ylim = c(0, 9e9))
 # (moving the y to 0 - by definition the mean of my residuals is mean = 0) -> 
 # if the mean wasn't = 0 then my predictions are off by a certain amount so 
 # E(e) = E(y-mu) = 0
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE)) 
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE, psill = 40000000, range = 400000)) 
 
 
 # Plot variogram 
-
 plot(mp.vg, mp.vg.fit)
-# plot(mp.vg, mp.vg.fit,
-#      xlab = expression(bold("Lag Distance (m)")),
-#      ylab = expression(bold("Semivariance")))
-  
 
-# Fit variogram with different models and parameters
-mp.vg.fit.exp <- fit.variogram(mp.vg, vgm("Exp", psill = 1, range = 100, nugget = 0.1))
-mp.vg.fit.sph <- fit.variogram(mp.vg, vgm("Sph", psill = 1, range = 100, nugget = 0.1))
-mp.vg.fit.gau <- fit.variogram(mp.vg, vgm("Gau", psill = 1, range = 100, nugget = 0.1))
+# Plot in ggplot (this is to find where we are missing data - will need to 
+# redo variogram with correct variogram afterwards)
+V = variogramLine(mp.vg.fit, maxdist = max(mp.vg$dist))
+head(Vtest)
 
-# Print the fitted variogram models
-plot(mp.vg, mp.vg.fit.exp)
-plot(mp.vg, mp.vg.fit.sph)
-plot(mp.vg, mp.vg.fit.gau)
+Variogram <- ggplot(mp.vg, aes(x = dist, y = gamma)) +
+  geom_point() +
+  geom_line(data = V) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "white", fill = "white"),
+        plot.background = element_rect(colour = "white", fill = "white"),
+        legend.position="top",
+        legend.title.align=0.5,
+        legend.title=element_text(color="black", size=14, family = "sans", 
+                                  face= "bold"),
+        legend.text=element_text(color="black", size=12, family = "sans"),
+        legend.key.size = unit(0.25, "cm"),
+        legend.key.width = unit(4, "cm"),
+        legend.background=element_blank(),
+        legend.key = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_continuous(limits = c(0,6e+06), expand = c(0,10000)) +
+  scale_x_log10(breaks = c(1+1,1000+1,10000+1,35000+1,40000+1, 100000+1,1000000+1),
+                labels = c(1,1000,10000,35000,40000, 100000,1000000)) +
+  geom_vline(xintercept = c(35000,40000), linetype = 2)
 
-
-mp.vg.test <- autofitVariogram(residuals ~ 1, input_data = vg.data, model = "Exp", verbose = TRUE)
-plot(mp.vg.fit.test, cutoff = 10500)
-mp.vg.fit.test <- fit.variogram(mp.vg.test, vgm("Exp", psill = 1.5, range = 1500, nugget = 0.0001)) 
-plot(mp.vg.test, mp.vg.fit.test)
-
-#need to save ggplot of variogram
-
+ggsave("Variogram.png", plot = Variogram, width = 8, height = 6,
+        dpi = 600, units = "in")
 
 
 # Global Kriging ------------------------------------------------------
@@ -181,3 +189,12 @@ plot(MP_prediction)
 # Putting regression-kriging back on the response scale 
 MP_prediction_model_response_scale <- exp(MP_prediction_model)
 plot(MP_prediction_model_response_scale)
+
+##QUESTION - why am I putting it back on the response scale? 
+#Isn't it already on the response scale if my residuals are on the response? 
+#And if it's not...still don't know why I'm doing this
+
+# Is this true?
+#Predicting on the link scale is crucial because it's the scale on which the 
+#linear combination of smooth (and possibly linear) terms is computed
+
