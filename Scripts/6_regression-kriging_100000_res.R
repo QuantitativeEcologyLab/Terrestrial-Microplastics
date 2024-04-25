@@ -106,7 +106,8 @@ plot(mp.vg, mp.vg.fit)
 V = variogramLine(mp.vg.fit, maxdist = max(mp.vg$dist))
 head(Vtest)
 
-Variogram <- ggplot(mp.vg, aes(x = dist, y = gamma)) +
+RA_Variogram <- 
+  ggplot(mp.vg, aes(x = dist, y = gamma)) +
   geom_point() +
   geom_line(data = V) +
   theme_bw() +
@@ -125,11 +126,11 @@ Variogram <- ggplot(mp.vg, aes(x = dist, y = gamma)) +
         legend.key = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_x_continuous(limits = c(0,6e+06), expand = c(0,10000)) +
-  scale_x_log10(breaks = c(1+1,1000+1,10000+1,35000+1,40000+1, 100000+1,1000000+1),
-                labels = c(1,1000,10000,35000,40000, 100000,1000000)) +
-  geom_vline(xintercept = c(35000,40000), linetype = 2)
+  scale_x_sqrt(breaks = c(10000+1,36000+1, 100000+1,500000+1, 670000+1, 1020000+1),
+                labels = c(10000,36000, 100000,500000,670000, 1020000)) +
+  geom_vline(xintercept = c(36000,670000,1020000), linetype = 2)
 
-ggsave("Variogram.png", plot = Variogram, width = 8, height = 6,
+ggsave("RA_Variogram.png", plot = Variogram, width = 8, height = 6,
         dpi = 600, units = "in")
 
 
