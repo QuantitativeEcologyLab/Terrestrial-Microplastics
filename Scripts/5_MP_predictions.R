@@ -24,16 +24,17 @@ MPdf$Predictions <- predict(model, data = MPdf, type = "response", se = FALSE)
 # Depth Predictions -------------------------------------------------------
 
 # Make a new dataframe
-newdf_depth <- data.frame(Max_Depth_cm = seq(3, 250, by = 1),
-                          HFI = 1,
-                          Elevation_km = 0,
-                          Study = 'new study')
+newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 1011),
+                          HFI = rep(mean(MPdf$HFI)),
+                          Elevation_km = rep(mean(MPdf$Elevation_km)),
+                          Study = rep('new study'))
 
 prediction_depth <- newdf_depth
 # mu here is the same thing as saying "predictions/projections" -> we are using 
 # pred$mu to make a new column in the df with the title of mu
-newdata = newdf_depth,
+newdata = newdf_depth
 prediction_depth$mu <- predict(model, 
+                               newdata = newdf_depth,
                                se.fit = FALSE,
                                type = 'response')
 # Note: the warning message here is indicating that there are new categories in 
@@ -69,6 +70,7 @@ mu_depth <- exp(fit_depth$fit)
 lower_95_depth <- exp(fit_depth$fit - 1.96 * fit_depth$se.fit) 
 upper_95_depth <- exp(fit_depth$fit + 1.96 * fit_depth$se.fit)
 
+
 # Combine dataframes
 prediction_depth_ci <- data.frame(prediction_depth,
                                   fit_depth,
@@ -80,7 +82,7 @@ prediction_depth_ci <- data.frame(prediction_depth,
 
 
 # Plot the depth prediction
-pred_depth <-
+#pred_depth <-
   ggplot() +
   geom_point(aes(Max_Depth_cm, Items_kg), MPdf, col = "#924900") +
   geom_ribbon(aes(Max_Depth_cm, ymin = lower_95, ymax = upper_95), prediction_depth_ci, fill = '#924900', alpha = 0.4) +
@@ -111,9 +113,9 @@ ggsave("pred_depth.png", width = 8, height = 6,
 # HFI Predictions ---------------------------------------------------------
 
 # Make a new dataframe
-newdf_HFI <- data.frame(HFI = seq(0, 1, by = 0.001),
-                          Max_Depth_cm = 1,
-                          Elevation_km = 10,
+newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 1011),
+                          Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 1011),
+                          Elevation_km = rep(mean(MPdf$Elevation_km), 1011),
                           Study = 'new study')
 
 prediction_HFI <- newdf_HFI
@@ -131,6 +133,7 @@ ggplot() +
 # Create credible intervals
 fit_HFI <- predict(model, newdata = prediction_HFI, se.fit = TRUE,
                      type = 'link')
+
 mu_HFI <- exp(fit_HFI$fit)
 lower_95_HFI <- exp(fit_HFI$fit - 1.96 * fit_HFI$se.fit)
 upper_95_HFI <- exp(fit_HFI$fit + 1.96 * fit_HFI$se.fit)
@@ -171,9 +174,9 @@ ggsave("pred_HFI.png", width = 8, height = 6,
 # Elevation Predictions ---------------------------------------------------
 
 # Make a new dataframe
-newdf_elev <- data.frame(Elevation_km = seq(0, 2473, by = 1),
-                        HFI = 1,
-                        Max_Depth_cm = 10,
+newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=1011),
+                        HFI = rep(mean(MPdf$HFI), 1011),
+                        Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 1011),
                         Study = 'new study')
 
 prediction_elev <- newdf_elev
@@ -227,6 +230,9 @@ prediction_elev_ci <- data.frame(prediction_elev,
 
 ggsave("pred_elev.png", width = 8, height = 6,
          dpi = 600, units = "in")
+
+
+
 
 
 
