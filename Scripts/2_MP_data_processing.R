@@ -37,4 +37,5 @@ MPdf$Study <- as.factor(MPdf$Study)
 # one outlier from study 24 (row 139)
 
 MPdf <- MPdf[-c(435:445, 550:664, 1139), ] 
+MPdf <- MPdf[MPdf$Study !=23, ] 
 MPdf <- na.omit(MPdf)
