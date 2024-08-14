@@ -14,13 +14,13 @@ locations <- vect(locations)
 locations <- terra::project(locations, crs_wintri)
 
 #Get local HFI values
-MPdf$HFI <- extract(HFI, locations)[,2]
+MPdf$HFI <- terra::extract(HFI, locations)[,2]
 
 #Get local elevation values
-MPdf$Elevation_km <- extract(Elevation_km, locations)[,2]
+MPdf$Elevation_km <- terra::extract(Elevation_km, locations)[,2]
 
 #Get local soil types
-MPdf$soil_type <- extract(soil, locations)[,2]
+MPdf$soil_type <- terra::extract(soil, locations)[,2]
 
 #Storing the projected coordinates in case they are needed
 MPdf$x <- geom(locations)[,3]
