@@ -10,6 +10,41 @@
 # ended up being used. 
 
 
+# Fit the correlation models:
+mp.vg.fit.sph <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE, psill = 90000000, range = 500000))
+mp.vg.fit.lin <- fit.variogram(mp.vg, vgm("Lin", nugget = TRUE, psill = 90000000, range = 500000))
+mp.vg.fit.gau <- fit.variogram(mp.vg, vgm("Gau", nugget = TRUE, psill = 199999999, range = 5000000)) 
+mp.vg.fit.exp <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE, psill = 99000000, range = 73000)) 
+fit.nugget <- fit.variogram(mp.vg, vgm("Nug")) #this would be the equivelant to an intercept-only model
+
+plot(mp.vg, mp.vg.fit.sph)
+plot(mp.vg, mp.vg.fit.lin)
+plot(mp.vg, mp.vg.fit.gau)
+plot(mp.vg, mp.vg.fit.exp)
+
+# Determining SSErr for variogram
+results <- data.frame(model = c("spherical", "linear", "Gaussian",
+                                "exponential", "nugget"),
+                      SSErr = c( attr(mp.vg.fit.sph, "SSErr"),
+                                 attr(mp.vg.fit.lin, "SSErr"),
+                                 attr(mp.vg.fit.gau, "SSErr"),
+                                 attr(mp.vg.fit.exp, "SSErr"),
+                                 attr(fit.nugget, "SSErr")))
+
+# Ordered by lowest to highest SSErr - lowest sum of squared errors in table is 
+# what should be used for kriging. Based on data, this won't be a great fit regardless 
+results <- results[order(results$SSErr), ] 
+results #exp best variogram 
+
+# Gaussian model doesn't make sense. Exponential has next best SSE so will 
+# be used. 
+
+
+
+
+
+
+# ------------------------ Variogram Model Selection ---------------------
 
 # ---------------------------- SSE Sph -----------------------------
 
@@ -276,6 +311,11 @@ results <- data.frame(model = c("spherical", "linear", "Gaussian",
                                  attr(fit.nugget, "SSErr")))
 
 results
+
+
+
+
+
 
 
 # ----------- Trying to use optim function ----------------
