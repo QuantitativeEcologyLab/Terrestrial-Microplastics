@@ -31,23 +31,32 @@ newdf$Elevation_km <- el_values$wc2.1_10m_elev
 newdf$Max_Depth_cm <- as.integer(0)
 
 #Set a "study" Only needed for predicting
-newdf$Study <- 'prediction'
+newdf$Study <- as.factor('prediction')
 
-# Rename the HFI column to math the model
+# Rename the HFI column to match the model
 names(newdf)[3] <- "HFI"
 head(newdf)
 
+
+
+# newdf "Study" contains less levels than MPdf "Study" 
+new_levels <- levels(newdf$Study)
+model_levels <- levels(MPdf$Study) 
+
+# Matched levels between MPdf and newdf
+newdf$Study <- factor(newdf$Study, levels = levels(MPdf$Study))
+
 # Predict MP concentrations using the fitted model
-# newdf$mu <- predict(model,
+# newdf$mu <- terra::predict(model,
 #                     newdata = newdf,
 #                     type = 'link',
 #                     se.fit = FALSE,
 #                     exclude = "Study")
- 
-# save(newdf, file = "MP_Prediction_newdf_10res.Rda")
+
+#save(newdf, file = "MP_Prediction_newdf_10res.Rda")
 
 # Create a raster from the predictions using entire data set
-MP_prediction_model <- rast(newdf[c("x", "y", "mu")], type="xyz", crs = crs_wintri)
+MP_prediction_model <- terra::rast(newdf[c("x", "y", "mu")], type="xyz", crs = crs_wintri)
 
 # The prediction here will be a data frame which will have to be 
 # converted back to a SpatRaster.
@@ -86,6 +95,8 @@ points(vg.data)
 mp.vg <- variogram(residuals ~ 1, data  = vg.data)
 plot(mp.vg, ylim = c(0, 9e9))
 
+#adjust the empirical variogram - look at number of points etc. 
+#look at these before using fitted 
 
 # Note: 'Fit' model --- this is the result of fitting a theoretical variogram 
 # model to the empirical variogram, providing estimates for model parameters 
@@ -95,17 +106,16 @@ plot(mp.vg, ylim = c(0, 9e9))
 # (moving the y to 0 - by definition the mean of my residuals is mean = 0) -> 
 # if the mean wasn't = 0 then my predictions are off by a certain amount so 
 # E(e) = E(y-mu) = 0
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE, psill = 40000000, range = 400000)) 
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE, psill = 99000000, range = 73000)) 
 
-
-# Plot variogram 
-plot(mp.vg, mp.vg.fit)
 
 # Plot in ggplot (this is to find where we are missing data - will need to 
 # redo variogram with correct variogram afterwards)
 V = variogramLine(mp.vg.fit, maxdist = max(mp.vg$dist))
-head(Vtest)
+head(V)
 
+
+# NEED TO DO THIS !!!!!
 RA_Variogram <- 
   ggplot(mp.vg, aes(x = dist, y = gamma)) +
   geom_point() +
@@ -141,12 +151,12 @@ ggsave("RA_Variogram.png", plot = Variogram, width = 8, height = 6,
 
 # Step 1: Define a grid based on the bounding box of the elevation raster
 # Currently using tidy verse, but better to use base R
-# grd_100_sf_100000 <- test %>% 
-#   st_bbox() %>% 
-#   st_as_sfc() %>% 
-#   st_make_grid(
-#     cellsize = c(100000, 100000) # pixel size (Made it large here for fast computation time, should be as small as computatioanlly feasible)
-#   )
+grd_100_sf_1000 <- test %>%
+  st_bbox() %>%
+  st_as_sfc() %>%
+  st_make_grid(
+    cellsize = c(1000, 1000) # pixel size (Made it large here for fast computation time, should be as small as computationally feasible)
+  )
 
 #save(grd_100_sf_100000, file = "grd_100_sf_100000.Rda")
 
