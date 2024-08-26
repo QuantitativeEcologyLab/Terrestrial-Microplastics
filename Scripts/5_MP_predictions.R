@@ -1,7 +1,6 @@
-setwd("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Figures")
-
 # Load required packages
 
+library(ggplot2)
 library(mgcv)
 library(dplyr)
 library(gridExtra)
@@ -82,15 +81,16 @@ prediction_depth_ci <- data.frame(prediction_depth,
 
 
 # Plot the depth prediction
-#pred_depth <-
+pred_depth <-
   ggplot() +
   geom_point(aes(Max_Depth_cm, Items_kg), MPdf, col = "#924900") +
   geom_ribbon(aes(Max_Depth_cm, ymin = lower_95, ymax = upper_95), prediction_depth_ci, fill = '#924900', alpha = 0.4) +
   geom_line(aes(Max_Depth_cm, mu), prediction_depth, col = 'black', lwd = 1) +
   scale_y_log10(labels = scales::label_number()) +
   scale_x_log10() +
-  ylab("MP Concentrations (items/kg)") +
-  xlab("Soil Depth (cm)") +
+  labs(y=NULL, x= "Soil Depth (cm)") +
+  # ylab("MP Concentrations (items/kg)") +
+  # xlab("Soil Depth (cm)") 
   theme_bw()+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -98,15 +98,17 @@ prediction_depth_ci <- data.frame(prediction_depth,
         axis.title.x = element_text(size=15, family = "sans", face = "bold"),
         axis.text.y = element_text(size=15, family = "sans"),
         axis.text.x  = element_text(size=15, family = "sans"),
-        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans"),
         legend.position = "right",
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm")) 
+        plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm")) +
+  ggtitle("B)")
   
-ggsave("pred_depth.png", width = 8, height = 6,
-       dpi = 600, units = "in") 
+  
+# ggsave("pred_depth.png", width = 8, height = 6,
+#        dpi = 600, units = "in") 
 
 
 
@@ -142,18 +144,19 @@ upper_95_HFI <- exp(fit_HFI$fit + 1.96 * fit_HFI$se.fit)
 prediction_HFI_ci <- data.frame(prediction_HFI,
                                   fit_HFI,
                                   mu = mu_HFI,
-                                  lower_95 = lower_95_HFI,
-                                  upper_95 = upper_95_HFI)
+                                  lower_95_HFI = lower_95_HFI,
+                                  upper_95_HFI = upper_95_HFI)
 
 # Plot the HFI prediction
-#pred_HFI <-
+pred_HFI <-
   ggplot() +
   geom_point(aes(HFI, Items_kg), MPdf, col = "#924900") +
-  geom_ribbon(aes(HFI, ymin = lower_95, ymax = upper_95), prediction_HFI_ci, fill = "#924900", alpha = 0.4) +
+  geom_ribbon(aes(HFI, ymin = lower_95_HFI, ymax = upper_95_HFI), prediction_HFI_ci, fill = "#924900", alpha = 0.4) +
   geom_line(aes(HFI, mu), prediction_HFI, col = 'black', lwd = 1) +
   scale_y_log10(labels = scales::label_number()) +
-  ylab("MP Concentrations (items/kg)") +
-  xlab("HFI") +
+  labs(y=NULL, x= "HFI") +
+  # ylab("MP Concentrations (items/kg)") +
+  # xlab("HFI") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -165,10 +168,11 @@ prediction_HFI_ci <- data.frame(prediction_HFI,
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
+  ggtitle("A)")
  
-ggsave("pred_HFI.png", width = 8, height = 6,
-       dpi = 600, units = "in")
+# ggsave("pred_HFI.png", width = 8, height = 6,
+#        dpi = 600, units = "in")
 
 
 # Elevation Predictions ---------------------------------------------------
@@ -206,19 +210,21 @@ prediction_elev_ci <- data.frame(prediction_elev,
                                 upper_95 = upper_95_elev)
 
 # Plot the elevation prediction
-#pred_elev <-
+pred_elev <-
   ggplot() +
   geom_point(aes(Elevation_km, Items_kg), MPdf, col = "#924900") +
-  geom_ribbon(aes(Elevation_km, ymin = lower_95, ymax = upper_95), prediction_elev_ci, fill = "#924900", alpha = 0.4) +
+  geom_ribbon(aes(Elevation_km, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = "#924900", alpha = 0.4) +
   geom_line(aes(Elevation_km, mu), prediction_elev, col = 'black', lwd = 1) +
   scale_y_log10(labels = scales::label_number()) +
   scale_x_log10() +
-  ylab("MP Concentrations (items/kg)") +
-  xlab("Elevation (m)") +
+  labs(y=NULL, x= "Elevation (km)") +
+  # ylab("MP Concentrations (items/kg)") +
+  # xlab("Elevation (m)") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=15, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=15, family = "sans", face = "bold",
+                                    margin = margin(t= 1500)),
         axis.title.x = element_text(size=15, family = "sans", face = "bold"),
         axis.text.y = element_text(size=15, family = "sans"),
         axis.text.x  = element_text(size=15, family = "sans"), 
@@ -226,30 +232,32 @@ prediction_elev_ci <- data.frame(prediction_elev,
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
+  ggtitle("C)")
 
-ggsave("pred_elev.png", width = 8, height = 6,
-         dpi = 600, units = "in")
-
-
-
+# ggsave("pred_elev.png", width = 8, height = 6,
+#          dpi = 600, units = "in")
 
 
+
+library(grid)
 
 trends2 <-
   grid.arrange(pred_HFI,pred_depth,
                ncol = 2,
                nrow = 1)
 
-trends22 <-
-  grid.arrange(trends2, pred_elev, 
-               ncol=1,
-               nrow=2,
-               heights = c(8,5.5),
-               widths = 6)
+yleft <- textGrob("MP Concentration (items/kg)", rot = 90, gp = gpar(fontsize = 20))
+
+trends22 <- grid.arrange(trends2, pred_elev, 
+                       ncol = 1,
+                       nrow = 2,
+                       left = yleft)
+
 
 ggsave("combined_proj_plot.png", plot = trends22, width = 8, height = 6,
        dpi = 600, units = "in")
+
 
 
 
