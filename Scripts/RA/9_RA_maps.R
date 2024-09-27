@@ -85,7 +85,6 @@ mapshot(RA_map, file= "figures/RA_map.png")
 
 
 # HSN and HSR only
-
 Hamilton_Stipa <- RA_Coords[-c(1:29,32,34,36:47,49,52),]
 
 
