@@ -15,16 +15,10 @@ model <- gam(Items_kg ~
              data = MPdf,
              method = "REML")
 
+as.factor(MPdf$Study)
 
 par(mar = c(3, 3, 3, 1) + 0.1)
 plot(model, pages = 1, scheme = 3, scale = 0)
-
-MPdf$residuals <- MPdf$Items_kg - predict(model, type = "response")
-mean_resid <- aggregate(residuals ~ x + y, data = MPdf, mean)
-
-# RESID2 <- residuals(model)
-# plot(RESID ~ RESID2)
-
 
 summary(model)
 #artificially explaining an excessive amount which impacts kriging (by a non-deterministic pattern) - 
@@ -32,7 +26,11 @@ summary(model)
 #partial effect on the y 
 
 
-# Averaging residuals from duplicated coordinates
-total_dup <- sum(duplicated(MPdf[, c("x", "y")]))
-total_dup
 
+
+
+# MPdf$residuals <- MPdf$Items_kg - predict(model, type = "response")
+# mean_resid <- aggregate(residuals ~ x + y, data = MPdf, mean)
+
+# RESID2 <- residuals(model)
+# plot(RESID ~ RESID2)
