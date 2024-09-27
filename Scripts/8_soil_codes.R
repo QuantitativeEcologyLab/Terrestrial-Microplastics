@@ -107,7 +107,8 @@ ggsave("soil_freq_country.png", plot = soil_freq_country, width = 6,
 # Paring the types of soils to MP concentrations 
 as.factor(MPdf$soil_type)
 
-ggplot(soil_data, aes(fill = Country, x = soil_type, y = Items_kg)) +
+MP_conc_soil <- 
+  ggplot(soil_data, aes(fill = Country, x = soil_type, y = Items_kg)) +
   geom_boxplot(width = 0.5) +
   labs(title = "",
        x = "Soil Type",
@@ -128,7 +129,8 @@ ggplot(soil_data, aes(fill = Country, x = soil_type, y = Items_kg)) +
         plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm"))
 
 
-
+ggsave("MP_conc_soil.png", plot = MP_conc_soil, width = 15,
+       height = 6, units = "in", dpi = 600)
 
 
 
