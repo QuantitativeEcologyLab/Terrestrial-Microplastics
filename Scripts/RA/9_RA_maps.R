@@ -106,3 +106,48 @@ mapshot(HS_map, file= "figures/HS_map.png")
 
 
 
+# ----------------- Overlay images ------------------
+
+library(terra)
+library(sf)
+
+png1 <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Figures/RA_map.png")
+png2 <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Figures/HS_map.png")
+
+# Define the extent 
+ext(png1) <- c(xmin = -120.8666, xmax = -120.4268, ymin = 50.06633, ymax = 50.81624) 
+ext(png2) <- c(xmin = -120.4495, xmax = -120.448, ymin = 50.06635, ymax = 50.0791) 
+
+# Assign CRS
+crs(png1) <- "EPSG:4326"
+crs(png2) <- "EPSG:4326"
+
+# Convert to shapefile 
+poly1 <-as.polygons(png1)
+poly2 <-as.polygons(png2)
+
+plot(poly1, col = "transparent")
+
+
+
+library(htmltools)
+library(leaflet)
+
+
+combined_RA_map <- 
+  tagList(
+  tags$div(style = "position: relative;",
+           tags$div(style = "position: absolute; 
+                    top: 10px; 
+                    right: 10px; 
+                    width: 300px; 
+                    height: 300px; 
+                    z-index: 999;",
+                    HS_map),
+           RA_map
+  )
+)
+
+browsable(combined_RA_map)
+
+
