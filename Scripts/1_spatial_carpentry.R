@@ -76,7 +76,7 @@ soil <- rast(soil)
 #reproject
 soil <- terra::project(soil, crs_wintri)
 
-#clip the soil type raster to the extent of the transformed world ma
+#clip the soil type raster to the extent of the transformed world map
 soil <- terra::mask(soil, world_wintri)
 
 # Match all resolution based HFI resolution
