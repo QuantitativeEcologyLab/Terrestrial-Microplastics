@@ -18,12 +18,24 @@ plot_scheme(bright(7), colours = TRUE, names = TRUE, size = 0.9)
 # Make "Predictions" column in dataframe
 MPdf$Predictions <- predict(model, data = MPdf, type = "response", se = FALSE)
 
+mean(MPdf$Predictions) #10,638.92
+# in comparison to mean of response --> 
+mean(MPdf$Items_kg) #10,700.36
+
+# need se = TRUE for CI?? 
+MPdf$Predictions <- predict(model, data = MPdf, type = "response", se = TRUE)
+
+
+
+
+
+
 
 
 # Depth Predictions -------------------------------------------------------
 
 # Make a new dataframe
-newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 1011),
+newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 771),
                           HFI = rep(mean(MPdf$HFI)),
                           Elevation_km = rep(mean(MPdf$Elevation_km)),
                           Study = rep('new study'))
@@ -98,7 +110,7 @@ pred_depth <-
         axis.title.x = element_text(size=15, family = "sans", face = "bold"),
         axis.text.y = element_text(size=15, family = "sans"),
         axis.text.x  = element_text(size=15, family = "sans"),
-        plot.title = element_text(hjust = -0.05, size = 12, family = "sans"),
+        plot.title = element_text(size = 12, family = "sans", face = "bold"),
         legend.position = "right",
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
@@ -115,9 +127,9 @@ pred_depth <-
 # HFI Predictions ---------------------------------------------------------
 
 # Make a new dataframe
-newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 1011),
-                          Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 1011),
-                          Elevation_km = rep(mean(MPdf$Elevation_km), 1011),
+newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 771),
+                          Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 771),
+                          Elevation_km = rep(mean(MPdf$Elevation_km), 771),
                           Study = 'new study')
 
 prediction_HFI <- newdf_HFI
@@ -168,7 +180,8 @@ pred_HFI <-
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"),
+        plot.title = element_text(size = 12, family = "sans", face = "bold")) +
   ggtitle("A)")
  
 # ggsave("pred_HFI.png", width = 8, height = 6,
@@ -178,9 +191,9 @@ pred_HFI <-
 # Elevation Predictions ---------------------------------------------------
 
 # Make a new dataframe
-newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=1011),
-                        HFI = rep(mean(MPdf$HFI), 1011),
-                        Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 1011),
+newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=771),
+                        HFI = rep(mean(MPdf$HFI), 771),
+                        Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 771),
                         Study = 'new study')
 
 prediction_elev <- newdf_elev
@@ -232,8 +245,9 @@ pred_elev <-
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
-  ggtitle("C)")
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"),
+        plot.title = element_text(size = 12, family = "sans", face = "bold")) +
+        ggtitle("C)")
 
 # ggsave("pred_elev.png", width = 8, height = 6,
 #          dpi = 600, units = "in")
