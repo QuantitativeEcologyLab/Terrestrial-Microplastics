@@ -22,16 +22,18 @@ world_sf <- st_as_sf(world)
 # Remove Antarctica
 #subset(world_sf, continent != "Antarctica")
 
-#define the projection system
+# Define the projection system
 crs_wintri <- "ESRI:53018" 
 
 # Convert CRS to lat/long projection
 world_sf <- st_transform(world_sf, crs = crs_wintri)
 st_crs(world_sf)
 
-#import my data
-mp_coord <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/global_coords.csv")
+# Create mp_coord data frame from MPdf
+mp_coord <- MPdf[,-c(1:11,14)]
 
+# Save .csv file
+write.csv(mp_coord, file = 'C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/mp_coord.csv')
 
 
 bright <- color("bright")
@@ -40,14 +42,13 @@ plot_scheme(bright(7), colours = TRUE, names = TRUE, size = 0.9)
 world_map <-
 ggplot() + 
   geom_sf(data = world_sf, fill = NA, color = "grey", size = 1) +
-  geom_point(data = mp_coord, aes(x = long, y = lat), color = "#924900", size = 0.6) +
+  geom_point(data = mp_coord, aes(x = x, y = y), color = "#924900", size = 0.6) +
   theme(
     plot.background = element_rect(fill = "white"),
     panel.background = element_rect(fill = "white"),
     axis.text = element_blank(),
     axis.title = element_blank()
   ) 
-
 
 ggsave("world_map.png", plot = world_map, width = 6,
        height = 4, units = "in", dpi = 300)
@@ -58,7 +59,7 @@ ggsave("world_map.png", plot = world_map, width = 6,
 # ----------------------------------------------------------------------
 
 # Load in HFI Data
-rast_hfi <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Rasters/HFI_proj.tif")
+rast_hfi <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/HFI_proj.tif")
 
 #Load in the sample location data
 #data <- read.csv("Global_Samples.csv")
@@ -89,19 +90,20 @@ world_map_hfi <-
   geom_spatraster(data = clipped_HFI, maxcell = 5e+06) +
   scale_fill_viridis(name = "Human Footprint Index",
                      na.value = "white",
-                     option = "magma",
+                     option = "rocket",
                      breaks=c(0,0.25,0.5,0.75,1),
                      labels=c(0,0.25,0.5,0.75,1),
                      limits=c(0,1)) +
   #Add locations of study sites
-  # geom_point(data = locations, aes(x = X, y = Y), col = "darkturquoise", size = 1, shape = 16) +
-  # geom_point(data = locations, aes(x = X, y = Y), col = "black", size = 0.5, shape = 16) +
+  geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
+  geom_point(data = mp_coord, aes(x = x, y = y), col = "blue1", size = 0.5, shape = 16) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_rect(colour = "white", fill = "white"),
         plot.background = element_rect(colour = "white", fill = "white"),
+        plot.title = element_text(face = "bold", size = 14),
         legend.position="top",
         legend.title.align=0.5,
         legend.title=element_text(color="black", size=14, family = "sans", face= "bold"),
@@ -122,11 +124,12 @@ world_map_hfi <-
   scale_y_continuous(expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
   guides(fill=guide_colourbar(title.position = "top", title="Human Footprint Index", barwidth = 30, ticks.colour = "grey20")) + 
-  coord_sf()
+  coord_sf() +
+  ggtitle("A)")
 
   
-ggsave("world_map_HFI.png", plot = world_map_hfi, width = 6,
-       height = 4, units = "in", dpi = 300)
+ggsave("world_map_HFI.png", plot = world_map_hfi, width = 7,
+       height = 4, units = "in", dpi = 600)
 
 
 
@@ -139,7 +142,7 @@ ggsave("world_map_HFI.png", plot = world_map_hfi, width = 6,
 # ----------------------------------------------------------------------
 
 # Load in HFI Data
-rast_elev <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Rasters/ELEVATION.tif")
+rast_elev <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/ELEVATION.tif")
 
 #Load in the sample location data
 #data <- read.csv("Global_Samples.csv")
@@ -162,17 +165,20 @@ world_map_elev <-
   geom_spatraster(data = clipped_elev, maxcell = 5e+06) +
   scale_fill_viridis(name = "Elevation",
                      na.value = "white",
-                     option = "magma",
-                     breaks=c(0,500,1000,1500,2000,2500,3000),
-                     labels=c(0,500,1000,1500,2000,2500,3000),
+                     option = "viridis",
+                     breaks=c(0,500,1000,1500,2000,2500),
+                     labels=c(0,500,1000,1500,2000,2500),
                      limits=c(0,3000)) +
-  
+  #Add locations of study sites
+  geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
+  geom_point(data = mp_coord, aes(x = x, y = y), col = "red", size = 0.5, shape = 16) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_rect(colour = "white", fill = "white"),
         plot.background = element_rect(colour = "white", fill = "white"),
+        plot.title = element_text(face = "bold", size = 14),
         legend.position="top",
         legend.title.align=0.5,
         legend.title=element_text(color="black", size=14, family = "sans", face= "bold"),
@@ -190,11 +196,11 @@ world_map_elev <-
   strip.background=element_blank()) +
   scale_y_continuous(expand = c(0,0)) +
     scale_x_continuous(expand = c(0,0)) +
-    guides(fill=guide_colourbar(title.position = "top", title="Elevation", barwidth = 30, ticks.colour = "grey20"))
-  
+    guides(fill=guide_colourbar(title.position = "top", title="Elevation", barwidth = 30, ticks.colour = "grey20")) +
+  ggtitle("B)")
   
 
-ggsave("world_map_elev.png", plot = world_map_elev, width = 6,
-       height = 4, units = "in", dpi = 300)
+ggsave("world_map_elev.png", plot = world_map_elev, width = 5,
+       height = 4, units = "in", dpi = 600)
 
 
