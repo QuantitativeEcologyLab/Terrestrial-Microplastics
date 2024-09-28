@@ -18,17 +18,17 @@ plot_scheme(bright(7), colours = TRUE, names = TRUE, size = 0.9)
 # Make "Predictions" column in dataframe
 MPdf$Predictions <- predict(model, data = MPdf, type = "response", se = FALSE)
 
+# Don't use these -
 mean(MPdf$Predictions) #10,638.92
 # in comparison to mean of response --> 
 mean(MPdf$Items_kg) #10,700.36
 
-# need se = TRUE for CI?? 
-MPdf$Predictions <- predict(model, data = MPdf, type = "response", se = TRUE)
 
+# Estimated mean concentration of MPs
+exp(coef(model)["(Intercept)"]) #678.8272
+exp(6.5204+c(-1.96,1.96)*0.4228)
 
-
-
-
+#Assumuing  you have gaus on log scale so then you get gaus CI and then exp to go back to response scale 
 
 
 
