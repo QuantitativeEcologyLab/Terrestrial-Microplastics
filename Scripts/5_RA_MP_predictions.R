@@ -1,4 +1,3 @@
-library(mgcv)
 
 #Import the HS data with coordinates
 HS_Coords <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/RA/HS_Coords.csv")
@@ -44,3 +43,7 @@ HS_Coords$mu <- predict(model,
                         type = 'response')
 
 
+
+#Adding Site ID to data set for ease
+HS_Coords$Site_ID <- c("HSN.I.1", "HSN.I.2", "HSN.O.1", "HSN.O.3", 
+                       "HSR.I.1", "HSR.I.3", "HSR.O.1", "HSR.O.3")
