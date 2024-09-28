@@ -27,8 +27,8 @@ mean(MPdf$Items_kg) #10,700.36
 # Estimated mean concentration of MPs
 exp(coef(model)["(Intercept)"]) #678.8272
 exp(6.5204+c(-1.96,1.96)*0.4228)
-
-#Assumuing  you have gaus on log scale so then you get gaus CI and then exp to go back to response scale 
+#This assumes  you have a Gaussian distribution on log scale (that is why you 
+#get Gaussian confidence intervals). Need to exp to go back to response scale. 
 
 
 
