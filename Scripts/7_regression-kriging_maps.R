@@ -86,7 +86,10 @@ kriging_map <-
              size = 0.8, shape = 1) +
   scale_fill_viridis(name = "",
                      na.value = "white",
-                     option = "viridis") +
+                     option = "viridis",
+                     breaks=c(0.3,0.6,0.9,1.2,1.5),
+                     labels=c(0.3,0.6,0.9,1.2,1.5),
+                     limits=c(0,1.5)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -102,7 +105,7 @@ kriging_map <-
         legend.title.align=0.5,
         legend.key.size = unit(0.25, "cm"),
         legend.key.width = unit(3, "cm")) +
-  guides(fill=guide_colourbar(title.position = "top", title="Kriging MP Concentration Estimates (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
+  guides(fill=guide_colourbar(title.position = "top", title="Kriging Estimates of MP Concentrations (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
   
   
 
