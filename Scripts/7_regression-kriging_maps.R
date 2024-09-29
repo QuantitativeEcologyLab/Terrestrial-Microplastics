@@ -18,7 +18,7 @@ crs_wintri <- "ESRI:53018"
 world_sf <- st_transform(world_sf, crs = crs_wintri)
 st_crs(world_sf)
 
-mp_coord <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/global_coords.csv")
+mp_coord <- MPdf[,-c(1:11,14,15)]
 
 
 
@@ -31,14 +31,14 @@ mp_coord <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global An
 model_prediction_map <- 
   ggplot() +
   geom_spatraster(data = MP_prediction_model_response_scale, maxcell = 5e+06) +
-  geom_point(data = mp_coord, aes(x = long, y = lat), color = "#924900", 
-             size = 0.8, shape = 1) +
+  geom_point(data = mp_coord, aes(x = x, y = y), color = "red", 
+              size = 0.8, shape = 1) +
   scale_fill_viridis(name = "",
                      na.value = "white",
-                     option = "turbo",
-                     breaks=c(500,1000,1500,2000,2500,3000,3500),
-                     labels=c(500,1000,1500,2000,2500,3000,3500),
-                     limits=c(0,4000)) +
+                     option = "viridis",
+                     breaks=c(500,1000,1500,2000,2500),
+                     labels=c(500,1000,1500,2000,2500),
+                     limits=c(0,2500)) +
   
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -63,8 +63,8 @@ model_prediction_map <-
         axis.ticks = element_blank(),
         strip.background=element_blank()) +
   scale_y_continuous(expand = c(0,0)) +
-  scale_x_continuous(expand = c(0,0)) 
-guides(fill=guide_colourbar(title.position = "top", title="", barwidth = 30, ticks.colour = "grey20"))
+  scale_x_continuous(expand = c(0,0)) +
+guides(fill=guide_colourbar(title.position = "top", title="Predicted MP Conentrations from GAM (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
 
 
 ggsave("model_prediction_map.png", plot = model_prediction_map, width = 6,
@@ -79,14 +79,14 @@ ggsave("model_prediction_map.png", plot = model_prediction_map, width = 6,
 
 var1 <- exp(var1_resampled)
 
-regression_krig_var_map <- 
+kriging_map <- 
   ggplot() +
   geom_spatraster(data = var1, maxcell = 5e+06) +
-  geom_point(data = mp_coord, aes(x = long, y = lat), color = "#924900", 
+  geom_point(data = mp_coord, aes(x = x, y = y), color = "red",
              size = 0.8, shape = 1) +
   scale_fill_viridis(name = "",
                      na.value = "white",
-                     option = "turbo") +
+                     option = "viridis") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -101,11 +101,12 @@ regression_krig_var_map <-
         legend.position="top",
         legend.title.align=0.5,
         legend.key.size = unit(0.25, "cm"),
-        legend.key.width = unit(3, "cm")) 
+        legend.key.width = unit(3, "cm")) +
+  guides(fill=guide_colourbar(title.position = "top", title="Kriging MP Concentration Estimates (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
+  
   
 
-
-ggsave("regression_krig_map.png", plot = regression_krig_var_map, width = 6,
+ggsave("kriging_map.png", plot = kriging_map, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
@@ -118,14 +119,14 @@ ggsave("regression_krig_map.png", plot = regression_krig_var_map, width = 6,
 final_regression_krig_map <- 
   ggplot() +
   geom_spatraster(data = MP_prediction, maxcell = 5e+06) +
-  geom_point(data = mp_coord, aes(x = long, y = lat), color = "#924900", 
+  geom_point(data = mp_coord, aes(x = x, y = y), color = "red",
              size = 0.8, shape = 1) +
-  scale_fill_viridis(name = "",
+  scale_fill_viridis(name = "Predicted MP Conentrations from RK Model (Items/kg)",
                      na.value = "white",
-                     option = "turbo",
-                     breaks=c(500,1000,1500,2000,2500,3000,3500),
-                     labels=c(500,1000,1500,2000,2500,3000,3500),
-                     limits=c(0,4000)) +
+                     option = "viridis",
+                     breaks=c(500,1000,1500,2000),
+                     labels=c(500,1000,1500,2000),
+                     limits=c(0,2000)) +
   
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -150,8 +151,8 @@ final_regression_krig_map <-
         axis.ticks = element_blank(),
         strip.background=element_blank()) +
   scale_y_continuous(expand = c(0,0)) +
-  scale_x_continuous(expand = c(0,0)) 
-  guides(fill=guide_colourbar(title.position = "top", title="", barwidth = 30, ticks.colour = "grey20"))
+  scale_x_continuous(expand = c(0,0)) +
+  guides(fill=guide_colourbar(title.position = "top", title="Regression-Kriging MP Concentration Estimates (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
 
   
 ggsave("final_regression_krig_map.png", plot =final_regression_krig_map, width = 6,
