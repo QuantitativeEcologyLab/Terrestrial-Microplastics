@@ -86,7 +86,7 @@ mapshot(RA_map, file= "figures/RA_map.png")
 
 # HSN and HSR only
 Hamilton_Stipa <- RA_Coords[-c(1:29,32,34,36:47,49,52),]
-
+write.csv(Hamilton_Stipa,"C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/RA/HS_Coords.csv" )
 
 
 HS_map <- 
@@ -104,30 +104,36 @@ HS_map <-
 mapshot(HS_map, file= "figures/HS_map.png")
 
 
+HSR_map <-
+  leaflet(Hamilton_Stipa) %>%
+  addTiles() %>%
+  setView(lng = -120.4484, lat = 50.06644, zoom = 15) %>%
+  addCircleMarkers(~X, ~Y,
+                   radius = 5,
+                   color = "black",
+                   fillColor = "magenta",
+                   fillOpacity = .5,
+                   stroke = TRUE,
+                   weight = 1)
+mapshot(HSN_map, file= "figures/HSN_map.png")
+
+HSN_map <-
+  leaflet(Hamilton_Stipa) %>%
+  addTiles() %>%
+  setView(lng = -120.4495, lat = 50.07910, zoom = 15) %>%
+  addCircleMarkers(~X, ~Y,
+                   radius = 5,
+                   color = "black",
+                   fillColor = "magenta",
+                   fillOpacity = .5,
+                   stroke = TRUE,
+                   weight = 1)
+mapshot(HSR_map, file= "figures/HRS_map.png")
+
+
+
 
 # ----------------- Overlay images ------------------
-
-library(terra)
-library(sf)
-
-png1 <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Figures/RA_map.png")
-png2 <- rast("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Figures/HS_map.png")
-
-# Define the extent 
-ext(png1) <- c(xmin = -120.8666, xmax = -120.4268, ymin = 50.06633, ymax = 50.81624) 
-ext(png2) <- c(xmin = -120.4495, xmax = -120.448, ymin = 50.06635, ymax = 50.0791) 
-
-# Assign CRS
-crs(png1) <- "EPSG:4326"
-crs(png2) <- "EPSG:4326"
-
-# Convert to shapefile 
-poly1 <-as.polygons(png1)
-poly2 <-as.polygons(png2)
-
-plot(poly1, col = "transparent")
-
-
 
 library(htmltools)
 library(leaflet)
@@ -148,5 +154,3 @@ combined_RA_map <-
 )
 
 browsable(combined_RA_map)
-
-
