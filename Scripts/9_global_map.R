@@ -163,7 +163,7 @@ plot(clipped_elev)
 world_map_elev <- 
   ggplot() +
   geom_spatraster(data = clipped_elev, maxcell = 5e+06) +
-  scale_fill_viridis(name = "Elevation",
+  scale_fill_viridis(name = "Elevation (m)",
                      na.value = "white",
                      option = "viridis",
                      breaks=c(0,500,1000,1500,2000,2500),
@@ -196,11 +196,11 @@ world_map_elev <-
   strip.background=element_blank()) +
   scale_y_continuous(expand = c(0,0)) +
     scale_x_continuous(expand = c(0,0)) +
-    guides(fill=guide_colourbar(title.position = "top", title="Elevation", barwidth = 30, ticks.colour = "grey20")) +
+    guides(fill=guide_colourbar(title.position = "top", title="Elevation (m)", barwidth = 30, ticks.colour = "grey20")) +
   ggtitle("B)")
   
 
-ggsave("world_map_elev.png", plot = world_map_elev, width = 5,
+ggsave("world_map_elev.png", plot = world_map_elev, width = 7,
        height = 4, units = "in", dpi = 600)
 
 
