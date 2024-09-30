@@ -1,11 +1,13 @@
 library(gridExtra)
+library(ggplot2)
+library(dplyr)
 
 
 # --------------------------------------------------------
   #HFI density plot
 # --------------------------------------------------------
 
-# Extract HFI global HFI values
+# Extract global HFI values
 global_HFI_values <- as.data.frame(hfi_raster, xy = TRUE)
 names(global_HFI_values)[3] <- "HFI"
 
@@ -49,11 +51,40 @@ ggsave("HFI_density.png", plot = HFI_density, width = 6,
        height = 4, units = "in", dpi = 600)
 
 
+# Calculating density values below 0.5 on HFI gradient -----------------------
+
+#Density values for global HFI
+threshold_HFI <- 0.9
+
+#Density values for global elevation
+below_threshold_global_HFI <- global_HFI_values$HFI > threshold_HFI
+below_threshold_global_HFI <- (sum(below_threshold_global_HFI))
+
+num_global_HFI_values <- nrow(global_HFI_values)
+
+percent_below_global_HFI <- below_threshold_global_HFI / num_global_HFI_values * 100
+print(percent_below_global_HFI)
+#94.48932 % below 0.5
+#0.02320246 % above 0.9
+
+#Density values for sampled HFIation
+below_threshold_sample_HFI <- MPdf$HFI > threshold_HFI
+below_threshold_sample_HFI <- (sum(below_threshold_sample_HFI))
+
+num_sample_HFI_values <- nrow(MPdf)
+
+percent_below_sample_HFI <- below_threshold_sample_HFI / num_sample_HFI_values * 100
+print(percent_below_sample_HFI)
+#8.171206
+#1.1815824
+
+
+
 # --------------------------------------------------------
 #Elevation density plot
 # --------------------------------------------------------
 
-# Extract HFI global HFI values
+# Extract global Elevation values
 global_elev_values <- as.data.frame(Elevation_km, xy = TRUE)
 names(global_elev_values)[3] <- "Elevation_km"
 
@@ -74,7 +105,7 @@ elev_density <-
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
   theme_minimal() +
     labs(y = NULL) +
-  xlab("Elevation") +
+  xlab("Elevation (m)") +
   #ylab ("Density") +
   #scale_y_sqrt() +
   scale_fill_manual(values = c("#515151", "red"),
@@ -102,16 +133,46 @@ ggsave("elev_density.png", plot = elev_density, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
+
+# Calculating density values below 500 on elevation gradient ------------------
+
+threshold_elev <- 500
+
+#Density values for global elevation
+below_threshold_global_elev <- global_elev_values$Elevation_km > threshold_elev
+below_threshold_global_elev <- (sum(below_threshold_global_elev))
+
+num_global_elev_values <- nrow(global_elev_values)
+
+percent_below_global_elev <- below_threshold_global_elev / num_global_elev_values * 100
+print(percent_below_global_elev)
+#94.38719 % below 2400 m
+#39.15593 % above 500 m
+
+#Density values for sampled elevation
+below_threshold_sample_elev <- MPdf$Elevation_km > threshold_elev
+below_threshold_sample_elev <- (sum(below_threshold_sample_elev))
+
+num_sample_elev_values <- nrow(MPdf)
+
+percent_below_sample_elev <- below_threshold_sample_elev / num_sample_elev_values * 100
+print(percent_below_sample_elev)
+#99.48119 % below 2000
+#11.15435 % above 500
+
+
 # --------------------------------------------------------
 #Depth density plot
 # --------------------------------------------------------
 
 # No density plot for global depth 
+MPdf_3 <- MPdf_2
+MPdf_3$dataset <- "Global_Depth"
 
 depth_density <-
   ggplot(MPdf, aes(x = Max_Depth_cm, fill = "red")) +
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
-  theme_minimal() +
+    theme_minimal() +
   labs(y = NULL) +
   xlab("Soil Depth (cm)") +
   #ylab ("Density") +
@@ -150,4 +211,4 @@ density_plots <-
                widths = c(6,6,6))
 
 ggsave("density_plots.png", plot = density_plots, width = 10,
-       height = 4, units = "in", dpi = 600)
+       height = 6, units = "in", dpi = 600)
