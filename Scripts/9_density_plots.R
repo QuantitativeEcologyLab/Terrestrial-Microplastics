@@ -26,14 +26,14 @@ HFI_density <-
   xlab("HFI") +
   ylab ("Density") +
   #scale_y_sqrt() +
-  scale_fill_manual(values = c("#515151", "red"),
+  scale_fill_manual(values = c("#515151", "#924900"),
                     labels = c("Global HFI", "Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
-        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
         axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
-        axis.text.y  = element_text(size=9, family = "sans", face = "bold"),
+        axis.text.y  = element_text(size=, family = "sans", face = "bold"),
         strip.text.x = element_text(size=9, family = "sans", face = "bold"),
         plot.title = element_text(hjust = -0.05, size = 8, family = "sans", face = "bold"),
         legend.position = c(0.4, 0.85),
@@ -108,12 +108,12 @@ elev_density <-
   xlab("Elevation (m)") +
   #ylab ("Density") +
   #scale_y_sqrt() +
-  scale_fill_manual(values = c("#515151", "red"),
+  scale_fill_manual(values = c("#515151", "#924900"),
                     labels = c("Global elevation", "Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
-        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
         axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
         axis.text.y  = element_text(size=9, family = "sans",  face = "bold"),
         strip.text.x = element_text(size=9, family = "sans", face = "bold"),
@@ -170,19 +170,19 @@ MPdf_3 <- MPdf_2
 MPdf_3$dataset <- "Global_Depth"
 
 depth_density <-
-  ggplot(MPdf, aes(x = Max_Depth_cm, fill = "red")) +
+  ggplot(MPdf, aes(x = Max_Depth_cm, fill = "#924900")) +
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
     theme_minimal() +
   labs(y = NULL) +
   xlab("Soil Depth (cm)") +
   #ylab ("Density") +
   #scale_y_sqrt() +
-  scale_fill_manual(values = c("red"),
+  scale_fill_manual(values = c("#924900"),
                     labels = c("Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
-        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
         axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
         axis.text.y  = element_text(size=9, family = "sans",  face = "bold"),
         strip.text.x = element_text(size=9, family = "sans", face = "bold"),
