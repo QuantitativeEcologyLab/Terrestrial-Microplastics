@@ -75,8 +75,8 @@ num_sample_HFI_values <- nrow(MPdf)
 
 percent_below_sample_HFI <- below_threshold_sample_HFI / num_sample_HFI_values * 100
 print(percent_below_sample_HFI)
-#8.171206
-#1.1815824
+#8.171206 % below 0.5
+#1.1815824 % above 0.9
 
 
 
