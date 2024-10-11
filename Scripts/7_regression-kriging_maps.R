@@ -103,6 +103,9 @@ kriging_map <-
         axis.ticks = element_blank(),
         legend.position="top",
         legend.title.align=0.5,
+        legend.title=element_text(color="black", size=14, family = "sans", 
+                                  face= "bold"),
+        legend.text=element_text(color="black", size=12, family = "sans"),
         legend.key.size = unit(0.25, "cm"),
         legend.key.width = unit(3, "cm")) +
   guides(fill=guide_colourbar(title.position = "top", title="Kriging Estimates of MP Concentrations (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
