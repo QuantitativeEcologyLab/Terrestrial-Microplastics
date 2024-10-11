@@ -34,7 +34,7 @@ mp_coord <- MPdf[,-c(1:11,14)]
 
 # Save .csv file
 write.csv(mp_coord, file = 'C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/mp_coord.csv')
-
+mp_coord <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/mp_coord.csv")
 
 bright <- color("bright")
 plot_scheme(bright(7), colours = TRUE, names = TRUE, size = 0.9)
@@ -84,7 +84,6 @@ plot(clipped_HFI)
 
 
 
-#darkturquoise / springgreen - both look a little horrible tho 
 world_map_hfi <- 
   ggplot() +
   geom_spatraster(data = clipped_HFI, maxcell = 5e+06) +
@@ -95,8 +94,8 @@ world_map_hfi <-
                      labels=c(0,0.25,0.5,0.75,1),
                      limits=c(0,1)) +
   #Add locations of study sites
-  geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
-  geom_point(data = mp_coord, aes(x = x, y = y), col = "blue1", size = 0.5, shape = 16) +
+  #geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
+  #geom_point(data = mp_coord, aes(x = x, y = y), col = "blue1", size = 0.5, shape = 16) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -170,8 +169,8 @@ world_map_elev <-
                      labels=c(0,500,1000,1500,2000,2500),
                      limits=c(0,3000)) +
   #Add locations of study sites
-  geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
-  geom_point(data = mp_coord, aes(x = x, y = y), col = "red", size = 0.5, shape = 16) + 
+  #geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1, shape = 16) +
+  #geom_point(data = mp_coord, aes(x = x, y = y), col = "red", size = 0.5, shape = 16) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
