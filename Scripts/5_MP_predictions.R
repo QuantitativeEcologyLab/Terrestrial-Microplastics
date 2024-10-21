@@ -25,10 +25,17 @@ mean(MPdf$Items_kg) #10,700.36
 
 
 # Estimated mean concentration of MPs
-exp(coef(model)["(Intercept)"]) #678.8272
+summary(model)
+texp(coef(model)["(Intercept)"]) #678.8272
 exp(6.5204+c(-1.96,1.96)*0.4228)
 #This assumes  you have a Gaussian distribution on log scale (that is why you 
 #get Gaussian confidence intervals). Need to exp to go back to response scale. 
+
+
+
+
+
+
 
 
 
@@ -230,7 +237,7 @@ pred_elev <-
   geom_line(aes(Elevation_km, mu), prediction_elev, col = 'black', lwd = 1) +
   scale_y_log10(labels = scales::label_number()) +
   scale_x_log10() +
-  labs(y=NULL, x= "Elevation (km)") +
+  labs(y=NULL, x= "Elevation (m)") +
   # ylab("MP Concentrations (items/kg)") +
   # xlab("Elevation (m)") +
   theme_bw() +
@@ -261,7 +268,7 @@ trends2 <-
                ncol = 2,
                nrow = 1)
 
-yleft <- textGrob("MP Concentration (items/kg)", rot = 90, gp = gpar(fontsize = 20))
+yleft <- textGrob(expression(bold("MP Concentration (items/kg)")), rot = 90, gp = gpar(fontsize = 20))
 
 trends22 <- grid.arrange(trends2, pred_elev, 
                        ncol = 1,
