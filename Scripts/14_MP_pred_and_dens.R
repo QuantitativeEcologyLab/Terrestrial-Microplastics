@@ -23,36 +23,45 @@ pred_depth <-
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  ggtitle("E)")
+        plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm")) 
 
-hist_depth <- 
-  ggplot(MPdf, aes(x = Max_Depth_cm)) +
-  geom_histogram(binwidth = 10, fill = "#924900", color = "#924900", boundary = 0.2, alpha = 0.4) +
-    theme_bw()+
+dens_depth <-
+  ggplot(MPdf, aes(x = Max_Depth_cm, fill = "#924900")) +
+  geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
+  theme_minimal() +
+  labs(y = NULL, x=NULL) +
+  #xlab("Soil Depth (cm)") +
+  #ylab ("Density") +
+  #scale_y_sqrt() +
+  scale_fill_manual(values = c("#924900"),
+                    labels = c("Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.text.y = element_text(size=9, family = "sans"),
-        axis.text.x  = element_text(size=9, family = "sans"),
-        plot.title = element_text(size = 9, family = "sans", face = "bold"),
-        legend.position = "right",
-        legend.key.size = (unit(0.5, "cm")),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
+        axis.text.y  = element_text(size=9, family = "sans",  face = "bold"),
+        strip.text.x = element_text(size=9, family = "sans", face = "bold"),
+        plot.title = element_text(hjust = -0.05, size = 8, family = "sans", face = "bold"),
+        legend.position = c(0.4, 0.85),
+        legend.title = element_blank(),
+        legend.text = element_text(size=9, family = "sans", face = "bold"),
+        legend.background = element_rect(fill = "transparent"),
+        legend.key.size = unit(0.2, 'cm'),
+        legend.spacing.y = unit(0.1, 'cm'),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  ggtitle("F)")
+        plot.margin = unit(c(0.2,0.01,0.2,0.2), "cm"))
 
 
 #x_depth <- textGrob("Soil Depth (cm)", rot = 360, gp = gpar(fontsize = 15))
 
-depth_pred_hist <-
-  grid.arrange(pred_depth, hist_depth,
+depth_pred_dens <-
+  grid.arrange(pred_depth, dens_depth,
                ncol = 2,
                nrow = 1)
 
-ggsave("depth_pred_hist.png", plot = depth_pred_hist, width = 8, height = 3,
+ggsave("depth_pred_dens.png", plot = depth_pred_dens, width = 8, height = 3,
        dpi = 600, units = "in")
 
 
@@ -77,41 +86,44 @@ pred_HFI <-
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  ggtitle("A)")
+        plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm"))
   
 
-hist_HFI <-
-  ggplot(MPdf, aes(x = HFI)) +
-  geom_histogram(binwidth = 0.05, fill = "#924900", color = "#924900", boundary = 0.2, alpha = 0.4) +
-  labs(title = "",
-       x = NULL, y = NULL) +
-       #x = "HFI",
-       #y = "Frequency") +
-  theme_bw()+
+dens_HFI <- 
+  ggplot(combined_HFI, aes(x = HFI, fill = dataset)) +
+  geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
+  theme_minimal() +
+  labs(x=NULL) +
+  #xlab("HFI") +
+  ylab ("Density") +
+  #scale_y_sqrt() +
+  scale_fill_manual(values = c("#515151", "#924900"),
+                    labels = c("Global HFI", "Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
         axis.title.x = element_text(size=12, family = "sans", face = "bold"),
-        axis.text.y = element_text(size=9, family = "sans"),
-        axis.text.x  = element_text(size=9, family = "sans"),
-        plot.title = element_text(size = 9, family = "sans", face = "bold"),
-        legend.position = "right",
-        legend.key.size = (unit(0.5, "cm")),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
+        axis.text.y  = element_text(size=, family = "sans", face = "bold"),
+        strip.text.x = element_text(size=9, family = "sans", face = "bold"),
+        plot.title = element_text(hjust = -0.05, size = 8, family = "sans", face = "bold"),
+        legend.position = c(0.4, 0.85),
+        legend.title = element_blank(),
+        legend.text = element_text(size=9, family = "sans", face = "bold"),
+        legend.background = element_rect(fill = "transparent"),
+        legend.key.size = unit(0.2, 'cm'),
+        legend.spacing.y = unit(0.1, 'cm'),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  coord_cartesian(xlim = c(0, 1)) +
-  ggtitle("B)")
+        plot.margin = unit(c(0.2,0.01,0.2,0.2), "cm"))
 
 
-HFI_pred_hist <-
-  grid.arrange(pred_HFI, hist_HFI,
+HFI_pred_dens <-
+  grid.arrange(pred_HFI, dens_HFI,
                ncol = 2,
-               nrow = 1,
-               widths = c(1,1))
+               nrow = 1)
 
-ggsave("HFI_pred_hist.png", plot = HFI_pred_hist, width = 8, height = 6,
+ggsave("HFI_pred_dens.png", plot = HFI_pred_dens, width = 8, height = 6,
        dpi = 600, units = "in")
 
 
@@ -123,7 +135,8 @@ pred_elev <-
   geom_ribbon(aes(Elevation_km, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = '#924900', alpha = 0.4) +
   geom_line(aes(Elevation_km, mu), prediction_elev, col = 'black', lwd = 1) +
   scale_y_log10(labels = trans_format("log10", math_format(10^.x))) +
-  labs(tag = "MP Concentrations (items/kg)") +
+  scale_x_log10() +
+  #labs(tag = "MP Concentrations (items/kg)") +
   theme_bw()+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -138,35 +151,38 @@ pred_elev <-
         legend.key.size = (unit(0.5, "cm")),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  ggtitle("C)")
+        plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm")) 
 
 
-hist_elev <-
-  ggplot(MPdf, aes(x = Elevation_km)) +
-  geom_histogram(binwidth = 100, fill = "#924900", color = "#924900", boundary = 0.2, alpha = 0.4) +
-  labs(x = "",
-       y = "",
-       tag = "Frequency") +
-  theme_bw()+
+dens_elev <- 
+  ggplot(combined_elev, aes(x = Elevation_km, fill = dataset)) +
+  geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
+  theme_minimal() +
+  labs(x = NULL) +
+  #xlab("Elevation (m)") +
+  ylab ("Density") +
+  scale_fill_manual(values = c("#515151", "#924900"),
+                    labels = c("Global elevation", "Samples taken")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.text.y = element_text(size=9, family = "sans"),
-        axis.text.x  = element_text(size=9, family = "sans"),
-        plot.tag = element_text(size = 12, family = "sans", face = "bold", angle = 90),
-        plot.tag.position = c(-0.12, 0.5), # horizontal, vertical
-        plot.title = element_text(size = 9, family = "sans", face = "bold"),
-        legend.position = "right",
-        legend.key.size = (unit(0.5, "cm")),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.x = element_text(size=9, family = "sans", face = "bold", colour = "black"),
+        axis.text.y  = element_text(size=9, family = "sans",  face = "bold"),
+        strip.text.x = element_text(size=9, family = "sans", face = "bold"),
+        plot.title = element_text(hjust = -0.05, size = 8, family = "sans", face = "bold"),
+        legend.position = c(0.4, 0.85),
+        legend.title = element_blank(),
+        legend.text = element_text(size=9, family = "sans", face = "bold"),
+        legend.background = element_rect(fill = "transparent"),
+        legend.key.size = unit(0.2, 'cm'),
+        legend.spacing.y = unit(0.1, 'cm'),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.5,0.2,2), "cm")) +
-  ggtitle("D)")
+        plot.margin = unit(c(0.2,0.01,0.2,0.2), "cm")) 
 
-elev_pred_hist <-
-  grid.arrange(pred_elev, hist_elev,
+elev_pred_dens <-
+  grid.arrange(pred_elev, dens_elev,
                ncol = 2,
                nrow = 1)
 
@@ -176,16 +192,16 @@ ggsave("elev_pred_hist.png", plot = elev_pred_hist, width = 8, height = 6,
 
 pred_hist <- 
   grid.arrange(
-    HFI_pred_hist, 
-    elev_pred_hist, 
-    depth_pred_hist, 
+    HFI_pred_dens, 
+    elev_pred_dens, 
+    depth_pred_dens, 
     ncol = 1)
 
 
 
 
 
-ggsave("pred_hist.png", plot = pred_hist, width = 8, height = 6,
+ggsave("pred_dens.png", plot = pred_dens, width = 8, height = 6,
        dpi = 600, units = "in")
 
 
