@@ -1,4 +1,3 @@
-setwd("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters")
 
 # Load required packages
 
@@ -23,9 +22,15 @@ newdf <- terra::as.data.frame(HFI, xy = TRUE, row.names = FALSE)
 # Extract elevation from elevation_global SpatRaster (Elevation_km)
 el_values <- terra::extract(Elevation_km, cbind(newdf$x, newdf$y))
 
+
+
+#el_values_clipped <- terra::extract(clipped_elev, cbind(newdf$x, newdf$y))
+
+
 # Add elevation to the HFI data frame. This will change depending on the
 # resolution you use 
 newdf$Elevation_km <- el_values$wc2.1_10m_elev
+
 
 #Define the depth we want to predict for (here just surface level)
 newdf$Max_Depth_cm <- as.integer(0)
@@ -38,25 +43,36 @@ names(newdf)[3] <- "HFI"
 head(newdf)
 
 
+# # newdf "Study" contains less levels than MPdf "Study"
+#   # MPdf has 21 factors but is from 1:24 currently. Need to correct this:
+# # Set factor levels directly to the range 1:21
+# MPdf$Study <- factor(MPdf$Study, levels = as.character(1:21))
+# 
+# # Verify the unique values and levels
+# unique(MPdf$Study)  # Check unique values
+# levels(MPdf$Study)  # Check levels again
+# 
+# # Match newdf's Study levels to MPdf's levels
+# newdf$Study <- factor(newdf$Study, levels = levels(MPdf$Study))
 
-# newdf "Study" contains less levels than MPdf "Study" 
-new_levels <- levels(newdf$Study)
-model_levels <- levels(MPdf$Study) 
 
-# Matched levels between MPdf and newdf
-newdf$Study <- factor(newdf$Study, levels = levels(MPdf$Study))
 
 # Predict MP concentrations using the fitted model
-# newdf$mu <- terra::predict(model,
-#                     newdata = newdf,
-#                     type = 'link',
-#                     se.fit = FALSE,
-#                     exclude = "Study")
+#newdf$mu 
+newdf <- predict(model,
+                    newdata = newdf[1:1000,],
+                    type = 'response',
+                    se.fit = FALSE,
+                    exclude = "Study",
+                    na.rm = TRUE)
 
-#save(newdf, file = "MP_Prediction_newdf_10res.Rda")
+
+ #save(newdf, file = "MP_Prediction_newdf_10res.Rda")
 
 # Create a raster from the predictions using entire data set
 MP_prediction_model <- terra::rast(newdf[c("x", "y", "mu")], type="xyz", crs = crs_wintri)
+
+MP_prediction_model <- terra::rast(newdf_test, crs = crs_wintri, type = NA)
 
 # The prediction here will be a data frame which will have to be 
 # converted back to a SpatRaster.
@@ -74,6 +90,8 @@ dev.off()
 # Import the elevation raster 
 test <- Elevation_km
 
+test_noNA <- ifel(is.na(Elevation_km), 0, Elevation_km)
+
 # Import the residuals
 
 # Averaging all residuals that have the same coordinates so that there are only 
@@ -88,6 +106,7 @@ vg.data <- st_as_sf(vect(data[,c("x", "y", "residuals"),],
 
 #Plot to make sure it looks OK
 plot(test)
+plot(test_noNA)
 points(vg.data)
 
 
@@ -111,40 +130,7 @@ plot(mp.vg, mp.vg.fit)
 
 
 
-
-# Plot in ggplot (this is to find where we are missing data - will need to 
-# redo variogram with correct variogram afterwards)
-V = variogramLine(mp.vg.fit, maxdist = max(mp.vg$dist))
-head(V)
-
-# NEED TO DO THIS !!!!!
-# RA_Variogram <- 
-#   ggplot(mp.vg, aes(x = dist, y = gamma)) +
-#   geom_point() +
-#   geom_line(data = V) +
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_rect(colour = "white", fill = "white"),
-#         plot.background = element_rect(colour = "white", fill = "white"),
-#         legend.position="top",
-#         legend.title.align=0.5,
-#         legend.title=element_text(color="black", size=14, family = "sans", 
-#                                   face= "bold"),
-#         legend.text=element_text(color="black", size=12, family = "sans"),
-#         legend.key.size = unit(0.25, "cm"),
-#         legend.key.width = unit(4, "cm"),
-#         legend.background=element_blank(),
-#         legend.key = element_blank(),
-#         axis.text.x = element_text(angle = 90, hjust = 1)) +
-#   scale_x_continuous(limits = c(0,6e+06), expand = c(0,10000)) +
-#   scale_x_sqrt(breaks = c(10000+1,36000+1, 100000+1,500000+1, 670000+1, 1020000+1),
-#                 labels = c(10000,36000, 100000,500000,670000, 1020000)) +
-#   geom_vline(xintercept = c(36000,670000,1020000), linetype = 2)
-
-ggsave("RA_Variogram.png", plot = Variogram, width = 8, height = 6,
-        dpi = 600, units = "in")
-
+   
 
 # Global Kriging ------------------------------------------------------
 
@@ -153,22 +139,22 @@ ggsave("RA_Variogram.png", plot = Variogram, width = 8, height = 6,
 
 # Step 1: Define a grid based on the bounding box of the elevation raster
 # Currently using tidy verse, but better to use base R
-grd_100_sf_1000 <- test %>%
+grd_100_sf_100000 <- test %>%
   st_bbox() %>%
   st_as_sfc() %>%
   st_make_grid(
-    cellsize = c(1000, 1000) # pixel size (Made it large here for fast computation time, should be as small as computationally feasible)
+    cellsize = c(100000, 100000) # pixel size (Made it large here for fast computation time, should be as small as computationally feasible)
   )
 
 #save(grd_100_sf_100000, file = "grd_100_sf_100000.Rda")
 
 
 # Ordinary Kriging of the residuals
-# mp_predictions_krige_100000 <- krige(
-#   residuals ~ 1,
-#   vg.data,
-#   grd_100_sf_100000,
-#   model = mp.vg.fit)
+mp_predictions_krige_100000 <- krige(
+  residuals ~ 1,
+  vg.data,
+  grd_100_sf_100000,
+  model = mp.vg.fit)
 
 # save(mp_predictions_krige_100000, file = "mp_predictions_krige_100000.Rda")
 
@@ -185,6 +171,7 @@ tester_cropped <- tester %>%
 var1_resampled <- terra::resample(tester_cropped, MP_prediction_model, method = "bilinear")
 
 
+plot(tester)
 
 #----------------------------------------------------------------------
 # Combined regression-kriging predictions
