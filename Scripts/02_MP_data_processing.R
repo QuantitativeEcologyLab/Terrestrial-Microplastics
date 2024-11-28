@@ -26,16 +26,25 @@ MPdf$soil_type <- terra::extract(soil, locations)[,2]
 MPdf$x <- geom(locations)[,3]
 MPdf$y <- geom(locations)[,4]
 
+names(MPdf)[9] <- "HFI"
+
 #Need "Study" as a factor 
 MPdf$Study <- as.factor(MPdf$Study)
+
+#MPdf$HFI_new <- MPdf_new$HFI
 
 #--------------------------------------------------------------------------
 # Cleaning up final dataset
 #--------------------------------------------------------------------------     
 
-# Filtering out study 12 and 19 from dataset, removing NA's, and removing 
+# Filtering out study 12, 15, 19, 20, and 23 from dataset, removing NA's, and removing 
 # one outlier from study 24 (row 139)
 
-MPdf <- MPdf[-c(435:445, 550:664, 1139), ] 
+MPdf <- MPdf[-c(435:445, 466:501, 550:664, 665:814, 1139), ] 
 MPdf <- MPdf[MPdf$Study !=23, ] 
 MPdf <- na.omit(MPdf)
+
+
+#save(MPdf, file = "MPdf.rda")
+
+ 
