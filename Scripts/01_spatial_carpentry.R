@@ -5,6 +5,12 @@ library(ncdf4)
 library(sf)
 library(geodata)
 
+#=======================================================================
+# Note: this script can be skipped as rasters are already saved and can be 
+# loaded in 02_MP_data_processing.R
+#=======================================================================
+
+
 #-----------------------------------------------------------------------
 # Initial raster import and setup
 #-----------------------------------------------------------------------
@@ -15,11 +21,11 @@ message("Starting data import.")
 crs_wintri <- "ESRI:53018"
 
 #import soil and HFI
-soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/HWSD2.bil")
-hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters/ml_hfi_v1_2019.nc")
+soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/HWSD2.bil")
+hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/ml_hfi_v1_2019.nc")
 
 # Download elevation raster (Global)
-Elevation_km <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Rasters")
+Elevation_m <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters")
 
 #Get world boundaries for clipping (not critical, but makes maps nicer looking)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
@@ -56,13 +62,13 @@ HFI <- terra::mask(hfi_raster, world_wintri)
 message("Processing the elevation raster.")
 
 #reproject
-Elevation_km <- terra::project(Elevation_km, crs_wintri)
+Elevation_m <- terra::project(Elevation_m, crs_wintri)
 
 #clip the elevation raster to the extent of the transformed world map
-Elevation_km <- terra::mask(Elevation_km, world_wintri)
+Elevation_m <- terra::mask(Elevation_m, world_wintri)
 
 # Match all resolution based HFI resolution
-Elevation_km <- terra::resample(Elevation_km, HFI, method = "bilinear")
+Elevation_m <- terra::resample(Elevation_m, HFI, method = "bilinear")
 
 #-----------------------------------------------------------------------
 # setup the soil raster
@@ -89,13 +95,18 @@ soil <- terra::resample(soil, HFI, method = "bilinear")
 
 message("Running checks on the processed rasters. If any are FALSE, there is a problem.")
 
-res(Elevation_km) == res(HFI)
-crs(Elevation_km) == crs(HFI)
+res(Elevation_m) == res(HFI)
+crs(Elevation_m) == crs(HFI)
 
 
 res(soil) == res(HFI)
 crs(soil) == crs(HFI)
 
 
-res(Elevation_km) == res(soil)
-crs(Elevation_km) == crs(soil)
+res(Elevation_m) == res(soil)
+crs(Elevation_m) == crs(soil)
+
+
+writeRaster(HFI, filename = "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/HFI_raster_processed.tif", overwrite = TRUE)
+writeRaster(Elevation_m, filename = "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/elev_raster_processed.tif", overwrite = TRUE)
+writeRaster(soil, filename = "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/soi_raster_processed.tif", overwrite = TRUE)
