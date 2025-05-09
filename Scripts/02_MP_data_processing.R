@@ -1,8 +1,14 @@
 
 message("Processing the MP dataset.")
 
+#Load rasters 
+soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/soi_raster_processed.tif")
+HFI <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/HFI_raster_processed.tif")
+Elevation_m <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/elev_raster_processed.tif")
+
+
 #Import the MP data with coordinates
-MPdf <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/Global_MP_R.csv")
+MPdf <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Scripts/Global_MP_R.csv")
 
 #projections are easting, northing
 locations <- st_as_sf(MPdf, coords = c("Long", "Lat"), crs="+proj=longlat +datum=WGS84")
@@ -47,4 +53,3 @@ MPdf <- na.omit(MPdf)
 
 #save(MPdf, file = "MPdf.rda")
 
- 
