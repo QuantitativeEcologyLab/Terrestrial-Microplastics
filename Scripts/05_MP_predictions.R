@@ -5,6 +5,7 @@ library(mgcv)
 library(dplyr)
 library(gridExtra)
 library(khroma)
+library(grid)
 
 # Load colourblind friendly colour palette
 bright <- color("bright")
@@ -38,11 +39,12 @@ exp(6.5204+c(-1.96,1.96)*0.4228)
 
 
 
-
-# Depth Predictions -------------------------------------------------------
+#--------------------------------------------------------------------------
+# Depth Predictions
+#--------------------------------------------------------------------------
 
 # Make a new dataframe
-newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 771),
+newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 585),
                           HFI = rep(mean(MPdf$HFI)),
                           Elevation_km = rep(mean(MPdf$Elevation_km)),
                           Study = rep('new study'))
@@ -126,17 +128,18 @@ pred_depth <-
   ggtitle("B)")
   
   
-# ggsave("pred_depth.png", width = 8, height = 6,
-#        dpi = 600, units = "in") 
+ggsave("./Figures/pred_depth.png", width = 8, height = 6,
+       dpi = 600, units = "in")
 
 
-
-# HFI Predictions ---------------------------------------------------------
+#--------------------------------------------------------------------------
+# HFI Predictions 
+#--------------------------------------------------------------------------
 
 # Make a new dataframe
-newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 771),
-                          Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 771),
-                          Elevation_km = rep(mean(MPdf$Elevation_km), 771),
+newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 585),
+                          Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 585),
+                          Elevation_km = rep(mean(MPdf$Elevation_km), 585),
                           Study = 'new study')
 
 prediction_HFI <- newdf_HFI
@@ -191,16 +194,17 @@ pred_HFI <-
         plot.title = element_text(size = 12, family = "sans", face = "bold")) +
   ggtitle("A)")
  
-# ggsave("pred_HFI.png", width = 8, height = 6,
-#        dpi = 600, units = "in")
+ggsave("./Figures/pred_HFI.png", width = 8, height = 6,
+       dpi = 600, units = "in")
 
-
-# Elevation Predictions ---------------------------------------------------
+#--------------------------------------------------------------------------
+# Elevation Predictions 
+#--------------------------------------------------------------------------
 
 # Make a new dataframe
-newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=771),
-                        HFI = rep(mean(MPdf$HFI), 771),
-                        Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 771),
+newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=585),
+                        HFI = rep(mean(MPdf$HFI), 585),
+                        Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 585),
                         Study = 'new study')
 
 prediction_elev <- newdf_elev
@@ -256,38 +260,32 @@ pred_elev <-
         plot.title = element_text(size = 12, family = "sans", face = "bold")) +
         ggtitle("C)")
 
-# ggsave("pred_elev.png", width = 8, height = 6,
-#          dpi = 600, units = "in")
+ggsave("./Figures/pred_elev.png", width = 8, height = 6,
+          dpi = 600, units = "in")
 
 
-
-library(grid)
+#--------------------------------------------------------------------------
+# Save all plots together
+#--------------------------------------------------------------------------
 
 trends2 <-
   grid.arrange(pred_HFI,pred_depth,
                ncol = 2,
                nrow = 1)
 
-yleft <- textGrob(expression(bold("MP Concentration (items/kg)")), rot = 90, gp = gpar(fontsize = 20))
+yleft <- textGrob(expression(bold("MP Concentration (items/kg)")), 
+                  rot = 90, gp = gpar(fontsize = 20))
 
 trends22 <- grid.arrange(trends2, pred_elev, 
                        ncol = 1,
                        nrow = 2,
                        left = yleft)
 
-
-ggsave("combined_proj_plot.png", plot = trends22, width = 8, height = 6,
+ggsave("./Figures/combined_proj_plot.png", plot = trends22, width = 8, height = 6,
        dpi = 600, units = "in")
 
 
-
-
-
-
-
-
 # Another way to code the above:
-
 # pred_elev_f_ci <-
 #   bind_cols(newd_elev_f, #could also use cbind() here  
 #             as.data.frame(predict(FIT.2.1, newdata = pred_elev_f, se.fit = TRUE, type = 'link')))
@@ -297,7 +295,6 @@ ggsave("combined_proj_plot.png", plot = trends22, width = 8, height = 6,
 #                          mu = exp(fit), 
 #                          lower_95 = exp(fit - 1.96 * se.fit),
 #                          upper_95 = exp(fit + 1.96 * se.fit))
-
 
 
 #--------------------------------------------------------------------------
@@ -310,4 +307,3 @@ ggsave("combined_proj_plot.png", plot = trends22, width = 8, height = 6,
 ggplot(MPdf, aes(Items_kg, Predictions)) +
   geom_abline(intercept = 0, slope = 1, color = 'red') +
   geom_point() 
-

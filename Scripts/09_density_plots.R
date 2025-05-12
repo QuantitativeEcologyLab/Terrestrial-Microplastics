@@ -47,7 +47,7 @@ HFI_density <-
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
     ggtitle("A)")
 
-ggsave("HFI_density.png", plot = HFI_density, width = 6,
+ggsave("./Figures/HFI_density.png", plot = HFI_density, width = 6,
        height = 4, units = "in", dpi = 600)
 
 
@@ -56,8 +56,8 @@ ggsave("HFI_density.png", plot = HFI_density, width = 6,
 #Density values for global HFI
 threshold_HFI <- 0.9
 
-#Density values for global elevation
-below_threshold_global_HFI <- global_HFI_values$HFI > threshold_HFI
+#Density values for global HFI
+below_threshold_global_HFI <- global_HFI_values$HFI < threshold_HFI
 below_threshold_global_HFI <- (sum(below_threshold_global_HFI))
 
 num_global_HFI_values <- nrow(global_HFI_values)
@@ -67,7 +67,7 @@ print(percent_below_global_HFI)
 #94.48932 % below 0.5
 #0.02320246 % above 0.9
 
-#Density values for sampled HFIation
+#Density values for sampled HFI
 below_threshold_sample_HFI <- MPdf$HFI > threshold_HFI
 below_threshold_sample_HFI <- (sum(below_threshold_sample_HFI))
 
@@ -129,8 +129,8 @@ elev_density <-
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
     ggtitle("B)")
 
-ggsave("elev_density.png", plot = elev_density, width = 6,
-       height = 4, units = "in", dpi = 300)
+ggsave("./Figures/elev_density.png", plot = elev_density, width = 6,
+       height = 4, units = "in", dpi = 600)
 
 
 
@@ -150,7 +150,7 @@ print(percent_below_global_elev)
 #39.15593 % above 500 m
 
 #Density values for sampled elevation
-below_threshold_sample_elev <- MPdf$Elevation_km > threshold_elev
+below_threshold_sample_elev <- MPdf$Elevation_km < threshold_elev
 below_threshold_sample_elev <- (sum(below_threshold_sample_elev))
 
 num_sample_elev_values <- nrow(MPdf)
@@ -198,8 +198,8 @@ depth_density <-
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm")) +
   ggtitle("C)")
 
-ggsave("depth_density.png", plot = depth_density, width = 6,
-       height = 4, units = "in", dpi = 300)
+ggsave("./Figures/depth_density.png", plot = depth_density, width = 6,
+       height = 4, units = "in", dpi = 600)
 
 
 
@@ -210,5 +210,5 @@ density_plots <-
                nrow = 1,
                widths = c(6,6,6))
 
-ggsave("density_plots.png", plot = density_plots, width = 10,
-       height = 6, units = "in", dpi = 600)
+ggsave("./Figures/density_plots.png", plot = density_plots, width = 10,
+       height = 4, units = "in", dpi = 600)

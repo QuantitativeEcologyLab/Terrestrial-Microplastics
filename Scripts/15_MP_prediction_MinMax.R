@@ -27,7 +27,7 @@ mean(MPdf$Items_kg) #10,700.36
 # Estimated mean concentration of MPs
 summary(model)
 exp(coef(model)["(Intercept)"]) #678.8272
-exp(6.5204+c(-1.96,1.96)*0.4228)
+exp(6.5581+c(-1.96,1.96)*0.4887)
 #This assumes  you have a Gaussian distribution on log scale (that is why you 
 #get Gaussian confidence intervals). Need to exp to go back to response scale. 
 
@@ -58,13 +58,13 @@ prediction_hfi1 <- predict(model,
 print(prediction_hfi1)
 
 #Need to exp() b/c it is currently on link scale. Need it on response scale. 
-exp(7.709848) #2230.20 MP at 0 HFI
-exp(8.046635) #3123.27 MP at 1 HFI
+exp(7.354427 ) #2230.20 MP at 0 HFI
+exp(8.113336) #3123.27 MP at 1 HFI
 
 #CI at low HFI
-exp(7.709848 +c(-1.96,1.96)*0.7050437) 
+exp(7.354427 +c(-1.96,1.96)*0.7912129 ) 
 #CI at high HFI
-exp(8.046635+c(-1.96,1.96)*0.6884680 )
+exp(8.113336+c(-1.96,1.96)*0.5650691  )
 
 
 # MP Conc Predictions at low and high elevation -----------------------------
@@ -80,13 +80,13 @@ prediction_elev1 <- predict(model,
                            se.fit = TRUE,
                            type = 'link')
 print(prediction_elev1)
-exp(6.562314) #707.91 MP at min elevation
-exp(6.191299) #488.48 MP at max elevaition
+exp(6.81043035 ) #707.91 MP at min elevation
+exp(0.04104626 ) #488.48 MP at max elevation
 
 #CI at low elevation
-exp(6.562314 +c(-1.96,1.96)*0.6445873) 
+exp(6.81043035  +c(-1.96,1.96)*0.5719704 ) 
 #CI at high elevation
-exp(6.191299 +c(-1.96,1.96)*0.7050437) 
+exp(0.04104626 +c(-1.96,1.96)*1.3776703 ) 
 
 
 
@@ -105,10 +105,10 @@ prediction_depth1 <- predict(model,
                             type = 'link')
 
 print(prediction_depth1)
-exp(7.418199) #1666.03 MP at depth of 0
-exp(5.732557) #308.76 MP at max depth
+exp(7.481457 ) #1666.03 MP at depth of 0
+exp(5.613369 ) #308.76 MP at max depth
 
 #CI at low elevation
-exp(7.418199  +c(-1.96,1.96)*0.6209763) 
+exp(7.481457   +c(-1.96,1.96)*0.5408184 ) 
 #CI at high elevation
-exp(5.732557  +c(-1.96,1.96)*0.6883131) 
+exp(5.613369   +c(-1.96,1.96)*0.8076514 ) 

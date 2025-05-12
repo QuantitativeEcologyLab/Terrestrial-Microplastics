@@ -4,12 +4,15 @@
 library(sf)
 library(terra)
 library(RSQLite)
+library(ggplot2)
 
 #-----------------------------------------------------------------------
 # Import soil type data
 #-----------------------------------------------------------------------
 
-soil_data <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/data/soil_data_R.csv")
+soil_data <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/data/soil_data.csv")
+
+
 
 #Frequency of soil types
 soil_freq <-
@@ -32,7 +35,7 @@ soil_freq <-
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm"))
 
-ggsave("soil_freq.png", plot = soil_freq, width = 6,
+ggsave("./Figures/soil_freq.png", plot = soil_freq, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
@@ -57,7 +60,7 @@ soil_freq_country <-
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm"))
 
-ggsave("soil_freq_country.png", plot = soil_freq_country, width = 6,
+ggsave("./Figures/soil_freq_country.png", plot = soil_freq_country, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
@@ -65,28 +68,32 @@ ggsave("soil_freq_country.png", plot = soil_freq_country, width = 6,
 as.factor(MPdf$soil_type)
 
 MP_conc_soil <- 
-  ggplot(soil_data_R, aes(fill = Country, x = soil_type, y = Items_kg)) +
+  ggplot(soil_data, aes(fill = Country, x = soil_type, y = Items_kg)) +
   geom_boxplot(width = 0.5) +
   labs(title = "",
        x = "Soil Type",
        y = "MP Concentration (items/kg)") +
   scale_y_log10() +
   theme_bw()+
+  coord_flip() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=15, family = "sans", face = "bold"),
-        axis.title.x = element_text(size=15, family = "sans", face = "bold"),
-        axis.text.y = element_text(size=15, family = "sans"),
-        axis.text.x  = element_text(size=15, family = "sans", angle = 75, vjust = 1, hjust = 1),
+        axis.title.y = element_text(size=30, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=30, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=20, family = "sans"),
+        axis.text.x  = element_text(size=20, family = "sans", angle = 75, vjust = 1, hjust = 1),
         plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
         legend.position = "right",
-        legend.key.size = (unit(0.5, "cm")),
+        legend.key.size = (unit(2, "cm")),
+        legend.title = element_text(size=25, family = "sans", face = "bold"),
+        legend.text = element_text(size = 18, family = "sans"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm"))
 
-ggsave("MP_conc_soil.png", plot = MP_conc_soil, width = 15,
-       height = 6, units = "in", dpi = 600)
+  
+ggsave("./Figures/MP_conc_soil.png", plot = MP_conc_soil, width = 20,
+       height = 20, units = "in", dpi = 600)
 
 
 #-----------------------------------------------------------------------
@@ -147,6 +154,10 @@ soil_data <- data.frame()
 # column from one data frame to another data frame)
 soil_data <- soildf %>%
   left_join(distinct(HWSD_SMU, HWSD2_SMU_ID, .keep_all = TRUE), by = "HWSD2_SMU_ID")
+
+# Removed additional studies 
+soil_data$Study <- MPdf$Study
+soil_data <- soil_data[-c(453:488, 536:685), ]
 
 # Note: manually added soil type based on code to soil_data code 
 # Assumed several soil types based off codes if there were NA's (closest soil type to existing code)

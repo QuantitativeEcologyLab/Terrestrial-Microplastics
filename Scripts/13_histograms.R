@@ -91,6 +91,6 @@ ggplot(MPdf, aes(x = Elevation_km)) +
         plot.margin = unit(c(0.2,0.5,0.2,0.2), "cm")) 
 
 
-ggsave("combined_proj_plot.png", plot = trends22, width = 8, height = 6,
+ggsave("./Figures/combined_proj_plot.png", plot = trends22, width = 8, height = 6,
        dpi = 600, units = "in")
 

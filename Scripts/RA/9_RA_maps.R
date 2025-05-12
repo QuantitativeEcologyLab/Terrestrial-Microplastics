@@ -70,6 +70,7 @@ RA_map <-
   leaflet(RA_Coords) %>%
   addTiles() %>%
   setView(lng = -120.530275, lat = 50.457125, zoom = 9) %>%
+  addScaleBar(position = "bottomright", options = scaleBarOptions(imperial = TRUE, metric = TRUE)) %>%
   addCircleMarkers(~X, ~Y,
                    radius = 5,
                    color = "black",
