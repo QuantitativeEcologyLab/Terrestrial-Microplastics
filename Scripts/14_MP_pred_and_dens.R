@@ -61,7 +61,7 @@ depth_pred_dens <-
                ncol = 2,
                nrow = 1)
 
-ggsave("depth_pred_dens.png", plot = depth_pred_dens, width = 8, height = 3,
+ggsave("./Figures/depth_pred_dens.png", plot = depth_pred_dens, width = 8, height = 3,
        dpi = 600, units = "in")
 
 
@@ -123,7 +123,7 @@ HFI_pred_dens <-
                ncol = 2,
                nrow = 1)
 
-ggsave("HFI_pred_dens.png", plot = HFI_pred_dens, width = 8, height = 6,
+ggsave("./Figures/HFI_pred_dens.png", plot = HFI_pred_dens, width = 8, height = 6,
        dpi = 600, units = "in")
 
 
@@ -186,9 +186,8 @@ elev_pred_dens <-
                ncol = 2,
                nrow = 1)
 
-ggsave("elev_pred_hist.png", plot = elev_pred_hist, width = 8, height = 6,
+ggsave("./Figures/elev_pred_hist.png", plot = elev_pred_hist, width = 8, height = 6,
        dpi = 600, units = "in")
-
 
 pred_hist <- 
   grid.arrange(
@@ -197,20 +196,5 @@ pred_hist <-
     depth_pred_dens, 
     ncol = 1)
 
-
-
-
-
-ggsave("pred_dens.png", plot = pred_dens, width = 8, height = 6,
+ggsave("./Figures/pred_dens.png", plot = pred_dens, width = 8, height = 6,
        dpi = 600, units = "in")
-
-
-
-
-
-
-
-
-
-
-

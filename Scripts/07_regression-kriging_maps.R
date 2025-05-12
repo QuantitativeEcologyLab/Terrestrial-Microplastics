@@ -28,7 +28,7 @@ mp_coord <- MPdf[,-c(1:11,14)]
 
 
 #with data ponts 
-#model_prediction_map <- 
+model_prediction_map <- 
   ggplot() +
   geom_spatraster(data = MP_prediction_model_response_scale, maxcell = 5e+06) +
   geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1.1, shape = 16) +
@@ -69,7 +69,7 @@ guides(fill=guide_colourbar(title.position = "top",
                             ticks.colour = "grey20"))
 
 
-ggsave("model_prediction_map.png", plot = model_prediction_map, width = 6,
+ggsave("./Figures/model_prediction_map.png", plot = model_prediction_map, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
@@ -79,8 +79,8 @@ ggsave("model_prediction_map.png", plot = model_prediction_map, width = 6,
 # Kriging Model
 # ----------------------------------------------------------------------
 
-#var1 <- exp(var1_resampled) --> no longer need to exponentiate b/c running it on link scale
-var1 <- var1_resampled
+var1 <- exp(var1_resampled) 
+
 
 #kriging_map <- 
   ggplot() +
@@ -89,10 +89,10 @@ var1 <- var1_resampled
   geom_point(data = mp_coord, aes(x = x, y = y), col = "red", size = 0.9, shape = 16) +
   scale_fill_viridis(name = "",
                      na.value = "white",
-                     option = "cividis",
-                     # breaks=c(0.3,0.6,0.9,1.2,1.5),
-                     # labels=c(0.3,0.6,0.9,1.2,1.5),
-                     limits=c(0,15000)) +
+                     option = "cividis") +
+                     # breaks=c(-2.5,-2,-1.5,-1,0,1),
+                     # labels=c(-2.5,-2,-1.5,-1,0,1),
+                     #limits=c(-2.5,1)) +
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -123,7 +123,7 @@ var1 <- var1_resampled
   
   
 
-ggsave("kriging_map.png", plot = kriging_map, width = 6,
+ggsave("./Figures/kriging_map.png", plot = kriging_map, width = 6,
        height = 4, units = "in", dpi = 300)
 
 
@@ -143,7 +143,7 @@ ggsave("kriging_map.png", plot = kriging_map, width = 6,
                      option = "cividis",
                      #breaks=c(500,1000,1500,2000),
                      #labels=c(500,1000,1500,2000),
-                     limits=c(0,20000)) +
+                     limits=c(0,1000)) +
   
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -171,16 +171,5 @@ ggsave("kriging_map.png", plot = kriging_map, width = 6,
   guides(fill=guide_colourbar(title.position = "top", title="Regression-Kriging MP Concentration Estimates (Items/kg)", barwidth = 30, ticks.colour = "grey20"))
 
   
-ggsave("final_regression_krig_map.png", plot =final_regression_krig_map, width = 6,
+ggsave("./Figures/final_regression_krig_map.png", plot =final_regression_krig_map, width = 6,
        height = 4, units = "in", dpi = 300)
-
-
-
-
-
-
-
-
-
-
-
