@@ -1,4 +1,6 @@
 
+# Load required packages
+
 library(raster)
 library(terra) #note: need to be careful about the loading of raster and terra at the same time
 library(ncdf4)
@@ -6,8 +8,8 @@ library(sf)
 library(geodata)
 
 #=======================================================================
-# Note: this script can be skipped as rasters are already saved and can be 
-# loaded in 02_MP_data_processing.R
+# Note: this script can be skipped as the rasters are already saved and 
+# can be loaded in 02_MP_data_processing.R
 #=======================================================================
 
 
@@ -17,26 +19,26 @@ library(geodata)
 
 message("Starting data import.")
 
-#define the projection system
+# Define the projection system
 crs_wintri <- "ESRI:53018"
 
-#import soil and HFI
+# Import soil and HFI
 soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/HWSD2.bil")
 hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/ml_hfi_v1_2019.nc")
 
 # Download elevation raster (Global)
 Elevation_m <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters")
 
-#Get world boundaries for clipping (not critical, but makes maps nicer looking)
+# Get world boundaries for clipping (not critical, but makes maps nicer looking)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
 
-#Drop antarctica
+#Drop Antarctica
 world_sf <- subset(world_sf, continent != "Antarctica")
 
-#Reproject
+# Reproject
 world_wintri <- lwgeom::st_transform_proj(world_sf, crs = crs_wintri)
 
-# Convert to spatvector class
+# Convert to SpatVector class
 world_wintri <- vect(world_wintri) 
 
 
@@ -46,13 +48,13 @@ world_wintri <- vect(world_wintri)
 
 message("Processing the HFI raster.")
 
-#convert to spatrast
+# Convert to spatrast
 hfi_raster <- rast(hfi_raster)
 
-#reproject
+# Reproject
 hfi_raster <- terra::project(hfi_raster, crs_wintri)
 
-#clip the raster data (HFI) to the extent of the transformed world map
+# Clip the raster data (HFI) to the extent of the transformed world map
 HFI <- terra::mask(hfi_raster, world_wintri)
 
 #-----------------------------------------------------------------------
@@ -61,10 +63,10 @@ HFI <- terra::mask(hfi_raster, world_wintri)
 
 message("Processing the elevation raster.")
 
-#reproject
+# Reproject
 Elevation_m <- terra::project(Elevation_m, crs_wintri)
 
-#clip the elevation raster to the extent of the transformed world map
+# Clip the elevation raster to the extent of the transformed world map
 Elevation_m <- terra::mask(Elevation_m, world_wintri)
 
 # Match all resolution based HFI resolution
@@ -76,13 +78,13 @@ Elevation_m <- terra::resample(Elevation_m, HFI, method = "bilinear")
 
 message("Processing the soil type raster.")
 
-#convert to spatRast
+# Convert to spatRast
 soil <- rast(soil)
 
-#reproject
+# Reproject
 soil <- terra::project(soil, crs_wintri)
 
-#clip the soil type raster to the extent of the transformed world map
+# Clip the soil type raster to the extent of the transformed world map
 soil <- terra::mask(soil, world_wintri)
 
 # Match all resolution based HFI resolution
