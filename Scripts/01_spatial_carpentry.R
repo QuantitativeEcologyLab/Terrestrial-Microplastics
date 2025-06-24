@@ -1,6 +1,7 @@
 
-# Load required packages
+message("Starting data import")
 
+# Load required packages
 library(raster)
 library(terra) #note: need to be careful about the loading of raster and terra at the same time
 library(ncdf4)
@@ -16,8 +17,6 @@ library(geodata)
 #-----------------------------------------------------------------------
 # Initial raster import and setup
 #-----------------------------------------------------------------------
-
-message("Starting data import.")
 
 # Define the projection system
 crs_wintri <- "ESRI:53018"

@@ -1,11 +1,14 @@
-# Load required packages
 
+# Load required packages
 library(ggplot2)
 library(mgcv)
 library(dplyr)
 library(gridExtra)
 library(khroma)
 library(grid)
+
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
 
 # Load colourblind friendly colour palette
 bright <- color("bright")
@@ -33,12 +36,6 @@ exp(6.5204+c(-1.96,1.96)*0.4228)
 #get Gaussian confidence intervals). Need to exp to go back to response scale. 
 
 
-
-
-
-
-
-
 #--------------------------------------------------------------------------
 # Depth Predictions
 #--------------------------------------------------------------------------
@@ -46,7 +43,7 @@ exp(6.5204+c(-1.96,1.96)*0.4228)
 # Make a new dataframe
 newdf_depth <- data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 585),
                           HFI = rep(mean(MPdf$HFI)),
-                          Elevation_km = rep(mean(MPdf$Elevation_km)),
+                          Elevation_m = rep(mean(MPdf$Elevation_m)),
                           Study = rep('new study'))
 
 prediction_depth <- newdf_depth
@@ -139,7 +136,7 @@ ggsave("./Figures/pred_depth.png", width = 8, height = 6,
 # Make a new dataframe
 newdf_HFI <- data.frame(HFI = seq(from = 0, to = 1, length.out = 585),
                           Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 585),
-                          Elevation_km = rep(mean(MPdf$Elevation_km), 585),
+                          Elevation_m = rep(mean(MPdf$Elevation_m), 585),
                           Study = 'new study')
 
 prediction_HFI <- newdf_HFI
@@ -202,7 +199,7 @@ ggsave("./Figures/pred_HFI.png", width = 8, height = 6,
 #--------------------------------------------------------------------------
 
 # Make a new dataframe
-newdf_elev <- data.frame(Elevation_km = seq(from=0, to=2473, length.out=585),
+newdf_elev <- data.frame(Elevation_m = seq(from=0, to=2473, length.out=585),
                         HFI = rep(mean(MPdf$HFI), 585),
                         Max_Depth_cm = rep(mean(MPdf$Max_Depth_cm), 585),
                         Study = 'new study')
@@ -215,8 +212,8 @@ prediction_elev$mu <- predict(model,
 
 # Plot the predicted elevation
 ggplot() + 
-  geom_point(aes(Elevation_km, Items_kg), MPdf) +
-  geom_line(aes(Elevation_km, mu), prediction_elev, col = 'red', lwd = 1) +
+  geom_point(aes(Elevation_m, Items_kg), MPdf) +
+  geom_line(aes(Elevation_m, mu), prediction_elev, col = 'red', lwd = 1) +
   scale_y_log10() 
 
 # Create credible intervals
@@ -236,9 +233,9 @@ prediction_elev_ci <- data.frame(prediction_elev,
 # Plot the elevation prediction
 pred_elev <-
   ggplot() +
-  geom_point(aes(Elevation_km, Items_kg), MPdf, col = "#924900") +
-  geom_ribbon(aes(Elevation_km, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = "#924900", alpha = 0.4) +
-  geom_line(aes(Elevation_km, mu), prediction_elev, col = 'black', lwd = 1) +
+  geom_point(aes(Elevation_m, Items_kg), MPdf, col = "#924900") +
+  geom_ribbon(aes(Elevation_m, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = "#924900", alpha = 0.4) +
+  geom_line(aes(Elevation_m, mu), prediction_elev, col = 'black', lwd = 1) +
   scale_y_log10(labels = scales::label_number()) +
   scale_x_log10() +
   labs(y=NULL, x= "Elevation (m)") +

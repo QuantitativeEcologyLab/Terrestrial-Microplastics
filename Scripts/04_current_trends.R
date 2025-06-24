@@ -1,19 +1,15 @@
-setwd("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Figures")
 
-
-#Needed for study colours
+# Load required packages
 library(viridis)
 library(ggplot2)
 library(gridExtra)
 
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
+
 #--------------------------------------------------------------------------
 # Current trends in terrestrial microplastics   
 #--------------------------------------------------------------------------   
-
-
-#Make "study" a factor
-MPdf$Study <- as.factor(MPdf$Study)
-
 
 #HFI 
 size_limits <- c(0.75, 2.5)
@@ -21,7 +17,7 @@ size_limits <- c(0.75, 2.5)
 HFI_current <- 
   ggplot(data = MPdf, 
          aes(y = Items_kg +1, x = HFI, size = Weights)) +
-  geom_point(aes(col = Elevation_km), alpha = 0.8, pch = 16) +
+  geom_point(aes(col = Elevation_m), alpha = 0.8, pch = 16) +
   scale_size_continuous(range = size_limits) +
   theme_bw()+
   theme(panel.grid.major = element_blank(),
@@ -61,7 +57,7 @@ depth_current <-
   ggplot(data = MPdf, 
          aes(y = Items_kg + 1, x = log10(Max_Depth_cm), size = Weights)) +
   scale_size_continuous(range = size_limits) +
-  geom_point(aes(col = Elevation_km), alpha = 0.8, pch = 16) +
+  geom_point(aes(col = Elevation_m), alpha = 0.8, pch = 16) +
   theme_bw()+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -97,7 +93,7 @@ depth_current <-
 #Elevation
 elev_current <- 
   ggplot(data = MPdf, 
-         aes(y = Items_kg+1, x = log10(Elevation_km), size = Weights)) +
+         aes(y = Items_kg+1, x = log10(Elevation_m), size = Weights)) +
   scale_size_continuous(range = size_limits, name = NULL) +
   geom_point(col = "blue", alpha = 0.8, pch = 16) +
  # scale_color_viridis_d(option = "turbo") +
@@ -140,7 +136,6 @@ trends <-
                heights = c(8,5.5),
                widths = 5)
 
-#NEED TO FIX THIS 
 ggsave(trends, file = "C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/
        Global Analysis/Global MP Distribution/Figures/Current_Trends.png",
        width = 3.25, height = 3, dpi = 600, units = "in")

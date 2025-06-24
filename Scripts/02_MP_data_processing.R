@@ -1,6 +1,5 @@
 
-
-message("Processing the MP dataset.")
+message("Processing the MP dataset")
 
 #--------------------------------------------------------------------------
 # Load required items 
@@ -16,7 +15,6 @@ Elevation_m <- rast("./Rasters/elev_raster_processed.tif")
 
 # Import the MP data with coordinates
 MPdf <- read.csv("./Data/Global_MP_R.csv")
-
 
 #--------------------------------------------------------------------------
 # Data processing

@@ -1,16 +1,18 @@
+
+message("Run GAM model")
+
 # Load Required Packages
 library(mgcv)
 
 # Load MPdf dataset 
-load("MPdf.rda")
-as.factor(MPdf$Study)
+MPdf <- read.csv(".Data/MPdf.csv")
 
 # GAM model:
 model <- gam(Items_kg ~
                # global terms
                s(HFI, k = 10, bs = "ad") + 
                s(sqrt(Max_Depth_cm), k = 5) +
-               s(Elevation_km, k = 6) + 
+               s(Elevation_m, k = 6) + 
                #ti(Elevation_km, HFI, k = 5, bs = "tp"),# + #don't need study in here b/c interaction term
                #ti(Max_Depth_cm, HFI, k = 5, bs = "tp") +
                # study-level terms
@@ -22,7 +24,7 @@ model <- gam(Items_kg ~
              na.action = na.fail)
 plot(model, pages = 1, scale = 0, scheme = 1)
 
-#save(model, file = 'model.rda')
+#saveRDS(model, file = './Data/MPdf_model.RDS')
 
 # summary(model)
   #artificially explaining an excessive amount which impacts kriging 
