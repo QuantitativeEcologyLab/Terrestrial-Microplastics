@@ -22,11 +22,11 @@ library(geodata)
 crs_wintri <- "ESRI:53018"
 
 # Import soil and HFI
-soil <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/HWSD2.bil")
-hfi_raster <- raster("C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters/ml_hfi_v1_2019.nc")
+soil <- raster("./Rasters/HWSD2.bil")
+hfi_raster <- raster("./Rasters/ml_hfi_v1_2019.nc")
 
 # Download elevation raster (Global)
-Elevation_m <- elevation_global(10, "C:/Users/lmills96/OneDrive - UBC/MSc/Global Analysis/Terrestrial-Microplastics/Rasters")
+Elevation_m <- elevation_global(10, "./Rasters")
 
 # Get world boundaries for clipping (not critical, but makes maps nicer looking)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
