@@ -1,13 +1,20 @@
 
 # Histogram could also be density and overlay histogram w/ frequency on it 
 
-
+# Load required packages 
 library(ggplot2)
 library(khroma)
 
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
+
+#----------------------------------------------------------------------
+# Plots
+#----------------------------------------------------------------------
+
 hist(MPdf$Max_Depth_cm)
 hist(MPdf$HFI)
-hist(MPdf$Elevation_km)
+hist(MPdf$Elevation_m)
 
 par(mar = c(5, 4, 4, 2))
     
@@ -71,7 +78,7 @@ par(mar = c(5, 4, 2, 2))
 
 
 #Elevation frequency  
-ggplot(MPdf, aes(x = Elevation_km)) +
+ggplot(MPdf, aes(x = Elevation_m)) +
     geom_histogram(binwidth = 100, fill = "#924900", color = "#924900", boundary = 0.2, alpha = 0.4) +
     labs(title = "",
       x = "Elevation (m)",

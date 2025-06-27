@@ -1,10 +1,13 @@
-# Load required packages
 
+# Load required packages
 library(ggplot2)
 library(mgcv)
 library(dplyr)
 library(gridExtra)
 library(khroma)
+
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
 
 # Load colourblind friendly colour palette
 bright <- color("bright")
@@ -35,7 +38,7 @@ exp(6.5581+c(-1.96,1.96)*0.4887)
 
 data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 771),
            HFI = rep(mean(MPdf$HFI)),
-           Elevation_km = rep(mean(MPdf$Elevation_km)),
+           Elevation_m = rep(mean(MPdf$Elevation_m)),
            Study = rep('new study'))
 
 
@@ -47,7 +50,7 @@ data.frame(Max_Depth_cm = seq(from = 3, to = 250, length.out = 771),
 # Make a new dataframe
 newdf_hfi1 <- data.frame(Max_Depth_cm =  0,
                           HFI = c(0,1),
-                          Elevation_km = mean(MPdf$Elevation_km),
+                          Elevation_m = mean(MPdf$Elevation_m),
                           Study = 'new study')
 
 prediction_hfi1 <- predict(model, 
@@ -72,7 +75,7 @@ exp(8.113336+c(-1.96,1.96)*0.5650691  )
 # Make a new dataframe
 newdf_elev1 <- data.frame(Max_Depth_cm = 0,
                          HFI = rep(mean(MPdf$HFI)),
-                         Elevation_km = c(0.602411, 2330.078),
+                         Elevation_m = c(0.602411, 2330.078),
                          Study = 'new study')
 
 prediction_elev1 <- predict(model, 
@@ -96,7 +99,7 @@ exp(0.04104626 +c(-1.96,1.96)*1.3776703 )
 # Make a new dataframe
 newdf_depth1 <- data.frame(Max_Depth_cm = c(0,250),
                           HFI = rep(mean(MPdf$HFI)),
-                          Elevation_km = mean(MPdf$Elevation_km),
+                          Elevation_m = mean(MPdf$Elevation_m),
                           Study = 'new study')
 
 prediction_depth1 <- predict(model, 

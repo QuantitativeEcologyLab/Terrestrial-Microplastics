@@ -1,11 +1,19 @@
 
 #--------------------------------------------------------------------------
-# Determining if there should be interaction terms in model
-#--------------------------------------------------------------------------     
+# Loading required data
+#-------------------------------------------------------------------------- 
 
 # Load required package
 library(ggplot2)
 library(mgcv)
+
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
+
+
+#--------------------------------------------------------------------------
+# Determining if there should be interaction terms in model
+#-------------------------------------------------------------------------- 
 
 HFI_quantiles <- quantile(MPdf$HFI, probs = c(0, 1/3, 2/3, 1))
 
@@ -13,7 +21,7 @@ MPdf$HFI_categories <- cut(MPdf$HFI, breaks = HFI_quantiles, labels = c("Low",
                                                                         "Med", "High"), include.lowest = TRUE)
 
 Elev_int <- 
-  ggplot(data = MPdf, aes(x = Elevation_km, y = Items_kg, 
+  ggplot(data = MPdf, aes(x = Elevation_m, y = Items_kg, 
                           color = HFI_categories)) +
   geom_point() +
   geom_smooth(method = "lm",
@@ -46,8 +54,8 @@ model1 <- gam(Items_kg ~
                 # global terms
                 s(HFI, k = 12, bs = "tp") + 
                 s(Max_Depth_cm) +
-                s(Elevation_km) +
-                ti(Elevation_km, HFI, k = 5, bs = "tp") + #don't need study in here b/c interaction term
+                s(Elevation_m) +
+                ti(Elevation_m, HFI, k = 5, bs = "tp") + #don't need study in here b/c interaction term
                 ti(Max_Depth_cm, HFI, k = 5, bs = "tp") +
                 # study-level terms
                 s(Study, bs = 're'), #random int - it doesn't really have random slopes 
@@ -70,8 +78,8 @@ model <- gam(Items_kg ~
                # global terms
                s(HFI, k = 12, bs = "tp") + 
                s(Max_Depth_cm) +
-               s(Elevation_km) +
-               #ti(Elevation_km, HFI, k = 5, bs = "tp") + #don't need study in here b/c interaction term
+               s(Elevation_m) +
+               #ti(Elevation_m, HFI, k = 5, bs = "tp") + #don't need study in here b/c interaction term
                #ti(Max_Depth_cm, HFI, k = 5, bs = "tp") +
                # study-level terms
                s(Study, bs = 're'), #random int - it doesn't really have random slopes 

@@ -19,7 +19,7 @@ HS_locations <- terra::project(HS_locations, crs_wintri)
 HS_Coords$HFI <- terra::extract(HFI, HS_locations)[,2]
 
 #Get local elevation values
-HS_Coords$Elevation_km <- terra::extract(Elevation_km, HS_locations)[,2]
+HS_Coords$Elevation_m <- terra::extract(Elevation_m, HS_locations)[,2]
 
 #Get local soil types
 HS_Coords$soil_type <- terra::extract(soil, HS_locations)[,2]

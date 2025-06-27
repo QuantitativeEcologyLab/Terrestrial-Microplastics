@@ -1,7 +1,11 @@
+
+# Load required packages
 library(gridExtra)
 library(ggplot2)
 library(dplyr)
 
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
 
 # --------------------------------------------------------
   #HFI density plot
@@ -85,11 +89,11 @@ print(percent_below_sample_HFI)
 # --------------------------------------------------------
 
 # Extract global Elevation values
-global_elev_values <- as.data.frame(Elevation_km, xy = TRUE)
-names(global_elev_values)[3] <- "Elevation_km"
+global_elev_values <- as.data.frame(Elevation_m, xy = TRUE)
+names(global_elev_values)[3] <- "Elevation_m"
 
 # Plot to see elevation
-ggplot(global_elev_values, aes(x = Elevation_km)) +
+ggplot(global_elev_values, aes(x = Elevation_m)) +
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30)
 
 # Add a new column to indicate the dataset
@@ -101,7 +105,7 @@ combined_elev <- bind_rows(global_elev_values, MPdf_2)
 
 # Plot
 elev_density <- 
-  ggplot(combined_elev, aes(x = Elevation_km, fill = dataset)) +
+  ggplot(combined_elev, aes(x = Elevation_m, fill = dataset)) +
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
   theme_minimal() +
     labs(y = NULL) +
@@ -139,7 +143,7 @@ ggsave("./Figures/elev_density.png", plot = elev_density, width = 6,
 threshold_elev <- 500
 
 #Density values for global elevation
-below_threshold_global_elev <- global_elev_values$Elevation_km > threshold_elev
+below_threshold_global_elev <- global_elev_values$Elevation_m > threshold_elev
 below_threshold_global_elev <- (sum(below_threshold_global_elev))
 
 num_global_elev_values <- nrow(global_elev_values)
@@ -150,7 +154,7 @@ print(percent_below_global_elev)
 #39.15593 % above 500 m
 
 #Density values for sampled elevation
-below_threshold_sample_elev <- MPdf$Elevation_km < threshold_elev
+below_threshold_sample_elev <- MPdf$Elevation_m < threshold_elev
 below_threshold_sample_elev <- (sum(below_threshold_sample_elev))
 
 num_sample_elev_values <- nrow(MPdf)

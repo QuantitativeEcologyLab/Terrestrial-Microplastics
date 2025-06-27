@@ -1,8 +1,15 @@
+
+# Load required packages
 library(grid)
 library(gridExtra)
 library(scales)
 
-#### Depth ####
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
+
+#----------------------------------------------------------------------
+# Depth
+#----------------------------------------------------------------------
 
 pred_depth <-
   ggplot() +
@@ -65,8 +72,9 @@ ggsave("./Figures/depth_pred_dens.png", plot = depth_pred_dens, width = 8, heigh
        dpi = 600, units = "in")
 
 
-
-#### HFI ####
+#----------------------------------------------------------------------
+# HFI
+#----------------------------------------------------------------------
 
 pred_HFI <-
   ggplot() +
@@ -127,13 +135,15 @@ ggsave("./Figures/HFI_pred_dens.png", plot = HFI_pred_dens, width = 8, height = 
        dpi = 600, units = "in")
 
 
-#### Elev ####
+#----------------------------------------------------------------------
+# Elevation
+#----------------------------------------------------------------------
 
 pred_elev <-
   ggplot() +
-  geom_point(aes(Elevation_km, Items_kg), MPdf, col = "#924900") +
-  geom_ribbon(aes(Elevation_km, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = '#924900', alpha = 0.4) +
-  geom_line(aes(Elevation_km, mu), prediction_elev, col = 'black', lwd = 1) +
+  geom_point(aes(Elevation_m, Items_kg), MPdf, col = "#924900") +
+  geom_ribbon(aes(Elevation_m, ymin = lower_95_elev, ymax = upper_95_elev), prediction_elev_ci, fill = '#924900', alpha = 0.4) +
+  geom_line(aes(Elevation_m, mu), prediction_elev, col = 'black', lwd = 1) +
   scale_y_log10(labels = trans_format("log10", math_format(10^.x))) +
   scale_x_log10() +
   #labs(tag = "MP Concentrations (items/kg)") +
@@ -155,7 +165,7 @@ pred_elev <-
 
 
 dens_elev <- 
-  ggplot(combined_elev, aes(x = Elevation_km, fill = dataset)) +
+  ggplot(combined_elev, aes(x = Elevation_m, fill = dataset)) +
   geom_histogram(aes(y = ..density..), alpha = 0.5, position = "identity", bins = 30) +
   theme_minimal() +
   labs(x = NULL) +
@@ -188,6 +198,11 @@ elev_pred_dens <-
 
 ggsave("./Figures/elev_pred_hist.png", plot = elev_pred_hist, width = 8, height = 6,
        dpi = 600, units = "in")
+
+
+#----------------------------------------------------------------------
+# Save all plots
+#----------------------------------------------------------------------
 
 pred_hist <- 
   grid.arrange(

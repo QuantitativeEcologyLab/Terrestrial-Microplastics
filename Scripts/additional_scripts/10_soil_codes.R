@@ -1,18 +1,20 @@
 
 # Load required packages
-
 library(sf)
 library(terra)
 library(RSQLite)
 library(ggplot2)
 
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
+
+# Load soil data
+soil_data <- read.csv("./Data/soil_data.csv")
+
+
 #-----------------------------------------------------------------------
-# Import soil type data
+# Plots
 #-----------------------------------------------------------------------
-
-soil_data <- read.csv("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Terrestrial-Microplastics/Scripts/data/soil_data.csv")
-
-
 
 #Frequency of soil types
 soil_freq <-
