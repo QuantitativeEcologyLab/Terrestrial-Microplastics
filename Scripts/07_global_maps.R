@@ -1,4 +1,3 @@
-setwd("C:/Users/lmills96/OneDrive - UBC/MSc Thesis Info/Global Analysis/Global MP Distribution/Figures")
 
 # Load required packages
 library(sf)
@@ -8,6 +7,9 @@ library(khroma) # colourblind friendly colours
 library(terra)
 library(tidyterra)
 library(viridis)
+
+# Load MPdf dataset 
+MPdf <- read.csv(".Data/MPdf.csv")
 
 # ----------------------------------------------------------------------
 # Global map with sampled locations
@@ -152,7 +154,7 @@ rast_elev <- terra::project(rast_elev, crs_wintri)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
 world_sf <- subset(world_sf, continent != "Antarctica")
 world_wintri <- lwgeom::st_transform_proj(world_sf, crs = crs_wintri)
-clipped_elev <- mask(Elevation_km, vect(world_wintri))
+clipped_elev <- mask(Elevation_m, vect(world_wintri))
 plot(clipped_elev)
 
 
