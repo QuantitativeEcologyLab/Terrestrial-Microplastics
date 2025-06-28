@@ -152,7 +152,7 @@ kriging_100000 <-
         grid_100000_sf, # gives the locations to predict the residuals at = newdata
         model = mp.vg.fit) # gives theoretical vg model describing how residuals vary with distance = model
 # note: if you were to do universal kriging, formula would be z ~ x+y rather than z ~ 1
-  saveRDS(kriging_100000, file = "./Data/kriging_100000.RDS")
+  #saveRDS(kriging_100000, file = "./Data/kriging_100000.RDS")
 
 
 # Convert prediction to SpatRaster (using the tidyterra package for convenience,
@@ -170,14 +170,17 @@ tester_cropped <- tester %>%
 var1_resampled <- terra::resample(tester_cropped, MP_prediction_model, method = "bilinear")
   #writeRaster(var1_resampled, filename = "./Rasters/var1_resampled.tif", overwrite = TRUE)
 plot(var1_resampled)
-
+# Currently not in the same crs?
+var1_resampled1 <- var1_resampled
+crs(var1_resampled1) <- crs(MP_prediction_model)
+plot(var1_resampled1)
 
 #----------------------------------------------------------------------
 # Combined: regression-Kriging predictions
 #----------------------------------------------------------------------
 
 # Get the regression-Kriging predictions by summing the two
-RK <- MP_prediction_model + var1_resampled
+RK <- MP_prediction_model + var1_resampled1
 
 # Convert back to the correct scale 
 RK <- exp(RK) 
