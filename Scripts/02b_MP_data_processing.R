@@ -15,11 +15,11 @@ Elevation_m <- rast("./Rasters/elev_raster_processed.tif")
 
 # Load MPdf
 
-# MPdf <- read.csv("./Data/MPdf_total.csv")
-# MPdf <- MPdf[,-c(1:6,9,10,15:27)]
-# as.factor(MPdf$study_num)
-# MPdf <- na.omit(MPdf)
-# write.csv(MPdf, file = "./Data/MPdf.csv")
+MPdf <- read.csv("./Data/MPdf_total.csv") 
+MPdf <- MPdf[,-c(1:6,9,10,15:27)]
+as.factor(MPdf$study_num)
+MPdf <- na.omit(MPdf)
+write.csv(MPdf, file = "./Data/MPdf.csv",row.names = FALSE)
 
 MPdf <- read.csv("./Data/MPdf.csv")
 
