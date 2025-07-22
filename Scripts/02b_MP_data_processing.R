@@ -2,7 +2,7 @@
 message("Processing the MP dataset")
 
 #--------------------------------------------------------------------------
-# Load required items 
+# Load rasters 
 #--------------------------------------------------------------------------
 
 # Load required packages
@@ -13,8 +13,15 @@ soil <- rast("./Rasters/soi_raster_processed.tif")
 HFI <- rast("./Rasters/HFI_raster_processed.tif")
 Elevation_m <- rast("./Rasters/elev_raster_processed.tif")
 
-# Import the MP data with coordinates
-MPdf <- read.csv("./Data/Global_MP_R.csv")
+# Load MPdf
+
+# MPdf <- read.csv("./Data/MPdf_total.csv")
+# MPdf <- MPdf[,-c(1:6,9,10,15:27)]
+# as.factor(MPdf$study_num)
+# MPdf <- na.omit(MPdf)
+# write.csv(MPdf, file = "./Data/MPdf.csv")
+
+MPdf <- read.csv("./Data/MPdf.csv")
 
 #--------------------------------------------------------------------------
 # Data processing
@@ -24,7 +31,7 @@ MPdf <- read.csv("./Data/Global_MP_R.csv")
 crs_wintri <- "ESRI:53018"
 
 # Projections are easting, northing
-locations <- st_as_sf(MPdf, coords = c("Long", "Lat"), crs="+proj=longlat +datum=WGS84")
+locations <- st_as_sf(MPdf, coords = c("longitude", "latitude"), crs="+proj=longlat +datum=WGS84")
 
 # Convert to spactVect class
 locations <- vect(locations)
