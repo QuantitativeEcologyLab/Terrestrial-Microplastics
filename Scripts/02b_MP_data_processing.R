@@ -1,27 +1,31 @@
 
 message("Processing the MP dataset")
 
-#--------------------------------------------------------------------------
-# Load rasters 
-#--------------------------------------------------------------------------
-
 # Load required packages
 library(terra)
 
+#--------------------------------------------------------------------------
 # Load required rasters 
+#--------------------------------------------------------------------------
 soil <- rast("./Rasters/soi_raster_processed.tif")
 HFI <- rast("./Rasters/HFI_raster_processed.tif")
 Elevation_m <- rast("./Rasters/elev_raster_processed.tif")
 
+#--------------------------------------------------------------------------
+# Cleaning up MP dataset
+#--------------------------------------------------------------------------     
+
 # Load MPdf
-
 MPdf <- read.csv("./Data/MPdf_total.csv") 
-MPdf <- MPdf[,-c(1:6,9,10,15:27)]
-as.factor(MPdf$study_num)
-MPdf <- na.omit(MPdf)
-write.csv(MPdf, file = "./Data/MPdf.csv",row.names = FALSE)
 
-MPdf <- read.csv("./Data/MPdf.csv")
+# Remove calculation columns and DOI, notes, title, and year_pub columns
+MPdf <- MPdf[,-c(1:6,9,10,15:27)]
+
+# Ensure the study number is a factor
+as.factor(MPdf$study_num)
+
+# Remove non-workable papers
+MPdf <- na.omit(MPdf)
 
 #--------------------------------------------------------------------------
 # Data processing
@@ -59,16 +63,13 @@ MPdf$Study <- as.factor(MPdf$Study)
 
 #MPdf$HFI_new <- MPdf_new$HFI
 
+
 #--------------------------------------------------------------------------
-# Cleaning up final dataset
-#--------------------------------------------------------------------------     
+# Finalizing dataset 
+#--------------------------------------------------------------------------
 
-# Filtering out study 12, 15, 19, 20, and 23 from dataset, removing NA's, and removing 
-# one outlier from study 24 (row 139)
+# Remove row 633 from study 19 (outlier)
+MPdf <- MPdf[-c(663)]
 
-MPdf <- MPdf[-c(435:445, 466:501, 550:664, 665:814, 1139), ] 
-MPdf <- MPdf[MPdf$Study !=23, ] 
-MPdf <- na.omit(MPdf)
-
-# Save final dataset:
-#write.csv(MPdf, file = "./Data/MPdf.csv")
+# Save final dataset
+write.csv(MPdf, file = "./Data/MPdf.csv", row.names = FALSE)
