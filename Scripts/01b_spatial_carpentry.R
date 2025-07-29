@@ -2,7 +2,6 @@
 message("Starting data import")
 
 # Load required packages
-library(raster)
 library(terra) #note: need to be careful about the loading of raster and terra at the same time
 library(ncdf4)
 library(sf)
@@ -27,7 +26,7 @@ library(geodata)
 crs_Mollweide <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs"
 
 # Import soil and HFI
-soil <- raster("./Rasters/HWSD2.bil")
+soil <- rast("./Rasters/HWSD2.bil")
 #hfi_raster <- raster("./Rasters/ml_hfi_v1_2019.nc")
 x <- rast("./Rasters/hfp_2021_100m_v1-2_cog.tif")/1000
 
@@ -59,10 +58,9 @@ hfi_raster <- terra::crop(x, world_mollweide)
 
 # Clip the raster to the extent of the world map
 hfi_raster <- terra::mask(hfi_raster, world_mollweide)
-plot(hfi_raster)
-# Reproject raster to ensure HFI raster is in Mollweide projection
-HFI <- terra::project(hfi_raster, crs_Mollweide)
 
+# HFI is already in Mollweide projection so no need to reproject
+HFI <- hfi_raster
 
 #-----------------------------------------------------------------------
 # Setup the elevation raster
@@ -71,7 +69,7 @@ HFI <- terra::project(hfi_raster, crs_Mollweide)
 message("Processing the elevation raster")
 
 # Reproject raster
-elevation <- terra::project(elevation, crs_Mollweide)
+elevation <- terra::project(elevation, HFI)
 
 # Mask the raster to Mollweide
 elevation <- terra::mask(elevation, world_mollweide)
@@ -91,13 +89,6 @@ elevation <- terra::resample(elevation, HFI, method = "bilinear")
 
 message("Processing the soil raster")
 
-
-# CAN I NOT LOAD SOIL AS TERRA::RAST??? 
-
-
-# Convert to spatRast
-# ???? soil <- rast(soil)
-
 # Reproject
 soil <- terra::project(soil, crs_Mollweide)
 
@@ -107,8 +98,6 @@ soil <- terra::mask(soil, world_mollweide)
 # Match all resolution based HFI resolution
 soil <- terra::resample(soil, HFI, method = "bilinear")
 
-
-
 #-----------------------------------------------------------------------
 # Checking all rasters are aligned correctly
 #-----------------------------------------------------------------------
@@ -116,13 +105,14 @@ soil <- terra::resample(soil, HFI, method = "bilinear")
 message("Running checks on processed rasters. If any are FALSE, there is a problem")
 
 res(HFI) == res(elevation)
-crs(HFI) == crs(elevation)
+same.crs(HFI, elevation)
 
 res(HFI) == res(soil)
-crs(HFI) == crs(soil)
+same.crs(HFI, soil)
 
 res(elevation) == res(soil)
-crs(elevation) == crs(soil)
+same.crs(elevation, soil)
+
 
 
 # Save rasters
