@@ -20,7 +20,7 @@ library(geodata) # for elevation raster
   # Note: mollweide is area-preserving: every km^2 of Earth appaears as the
     # same size on the map; ideal for quantitative data
   # Note: mollweide is a projection, not a full crs with an EPSG code and so
-    # using just 'crs_Mollweide <- "EPSG:6326"' would not work as there is
+    # using just 'crs_Mollweide <- "EPSG:6326" would not work as there is
     # currently no PROJ string
 crs_Mollweide <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs"
 

@@ -1,9 +1,18 @@
-# Ensure "Study" is a factor in the data set
-as.factor(MPdf$Study)
+
+# General overview:
+ggplot(data = MPdf, aes(x = max_depth_cm, y = Items_kg, col = elevation_m)) +
+  geom_point() 
+
+ggplot(data = MPdf, aes(x = HFI, y = log10(Items_kg), col = elevation_m)) +
+  geom_point() 
+
+ggplot(data = MPdf, aes(x = log10(elevation_m), y = log10(Items_kg), col = HFI)) +
+  geom_point() 
+
+
 
 # Specifying the min/max size of the weights
 size_limits <- c(0.75, 2.5)
-
 
 # All data
 ggplot(data = MPdf, 
@@ -17,8 +26,8 @@ ggplot(data = MPdf,
               method.args = list(family = tw),
               se = FALSE)
 
-# Removing study row 1139 from initial dataframe to confirm outlier
-MPdf_prac <- MPdf[-(1139), ]
+# Removing study row 663 from initial dataframe to confirm outlier
+MPdf_prac <- MPdf[-(633), ]
 
 ggplot(data = MPdf_prac, 
        aes(y = log10(Items_kg) +1, x = HFI, size = Weights)) +
