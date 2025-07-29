@@ -1,5 +1,5 @@
 
-# Removing all NAs from MPdf to get a model to predict for the NAs
+# Removing all NAs from MPdf to get model and predictions
 
 # Remove all NAs
 MPdf_subset <- na.omit(MPdf)
