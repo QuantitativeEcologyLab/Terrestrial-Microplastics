@@ -2,10 +2,9 @@
 message("Starting data import")
 
 # Load required packages
-library(terra) #note: need to be careful about the loading of raster and terra at the same time
-library(ncdf4)
-library(sf)
-library(geodata)
+library(terra) # for rasters 
+library(sf) # for spatial 
+library(geodata) # for elevation raster
 
 #=======================================================================
 # Note: this script can be skipped as the rasters are already saved and 
@@ -118,4 +117,4 @@ same.crs(elevation, soil)
 # Save rasters
 writeRaster(HFI, filename = "./Rasters/HFI_processed.tif", overwrite = TRUE)
 writeRaster(elevation, filename = "./Rasters/elev_processed.tif", overwrite = TRUE)
-writeRaster(soil, filename = "./Rasters/soi_processed.tif", overwrite = TRUE)
+writeRaster(soil, filename = "./Rasters/soil_processed.tif", overwrite = TRUE)
