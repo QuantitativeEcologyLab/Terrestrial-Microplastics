@@ -17,7 +17,7 @@ elevation_m <- rast("./Rasters/elev_processed.tif")
 #--------------------------------------------------------------------------     
 
 # Load MPdf
-MPdf <- read.csv("./Data/MPdf_total.csv") 
+MPdf <- read.csv("./Data/MPdf_total.csv")
 
 # Remove calculation columns and DOI, notes, title, and year_pub columns
 MPdf <- MPdf[,-c(1:6,9,10,15:27)]
