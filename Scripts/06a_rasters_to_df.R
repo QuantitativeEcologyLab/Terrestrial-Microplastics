@@ -9,16 +9,39 @@ library(terra)
 library(future.apply)
 
 # Load required rasters
-HFI <- rast("./Rasters/HFI_processed.tif")
-elevation_m <- rast("./Rasters/elev_processed.tif")
+HFI <- rast("/home/lmills96/Documents/GDMP/Rasters/HFI_processed.tif")
+elevation_m <- rast("/home/lmills96/Documents/GDMP/Rasters/elev_processed.tif")
+
+# ---------------------------------------------------------------------------
+# Decrease raster resolutions
+# ---------------------------------------------------------------------------
+
+# Decrease raster resolution 
+HFI <- aggregate(HFI, fact = 3)
+# Match resolution
+elevation_m <- terra::resample(elevation_m, HFI, method = "bilinear")
+
+  res(HFI) == res(elevation_m) # TRUE
+  same.crs(HFI, elevation_m) # TRUE
+  ext(HFI) == ext(elevation_m) # TRUE
+
+# Save updated rasters
+writeRaster(HFI, filename = "/home/lmills96/Documents/GDMP/Rasters/HFI_300res.tif", overwrite = TRUE)
+writeRaster(elevation_m, filename = "/home/lmills96/Documents/GDMP/Rasters/elev_300res.tif", overwrite = TRUE)
 
 # ---------------------------------------------------------------------------
 # Combine the rasters
 # ---------------------------------------------------------------------------
 
 # Combining the HFI and elevation rasters into a layered raster
-  # Note: must ensure extent and resolution are the same
-stacked_rasters <- c(HFI, elevation_m)
+# Note: must ensure extent and resolution are the same
+stacked_rasters <- c(HFI, elevation_m, warn = TRUE)
+
+# Confirm it worked
+nlyr(stacked_rasters) # 2
+
+# Save stacked raster
+writeRaster(stacked_rasters, filename = "/home/lmills96/Documents/GDMP/Rasters/stacked_rasters.tif", overwrite = TRUE)
 
 # ---------------------------------------------------------------------------
 # Determining how many chunks to break raster into
