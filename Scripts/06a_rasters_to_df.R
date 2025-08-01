@@ -1,7 +1,32 @@
 ## Breaking up large raster into blocks 
+
+# ---------------------------------------------------------------------------
+# Load required items
+# ---------------------------------------------------------------------------
+
+# Load required packages
 library(terra)
 library(future.apply)
 
+# Load required rasters
+HFI <- rast("./Rasters/HFI_processed.tif")
+elevation_m <- rast("./Rasters/elev_processed.tif")
+
+# ---------------------------------------------------------------------------
+# Combine the rasters
+# ---------------------------------------------------------------------------
+
+# Combining the HFI and elevation rasters into a layered raster
+  # Note: must ensure extent and resolution are the same
+stacked_rasters <- c(HFI, elevation_m)
+
+# ---------------------------------------------------------------------------
+# Determining how many chunks to break raster into
+# ---------------------------------------------------------------------------
+
+# Determine how many rows in raster
+  # Note: only need to look at one raster as they are both the exact same
+nrow(HFI) # 58580 
 
 # Manually divide raster by rows
 rows <- nrow(HFI) # 58580 rows
@@ -12,14 +37,17 @@ blocks <- 10
 # Dividing the raster into 10 chunks (5858 rows each)
 rows_per_block <- ceiling(rows / blocks)
 
-# Create empty list
-#chunks <- list()
+# ---------------------------------------------------------------------------
+# Creating the function to parallelize code 
+# ---------------------------------------------------------------------------
 
 #Parallelize the code
-#CORES <- future::availableCores(logical = FALSE) - 1
 plan(multisession, workers = 10)
 
-# Create a for loop
+# Create a function
+  # Note: can run function for just one raster (rather than raster stack) b/c 
+  # both HFI and elev are the same - just need to ensure you are CROPPING the 
+  # stacked raster
 process_block <- function(i) {
 
   row_start <- ((i - 1) * rows_per_block) + 1
@@ -29,7 +57,8 @@ process_block <- function(i) {
   y_start <- yFromRow(HFI, row_start)  # top edge of first row in block
   y_end <- yFromRow(HFI, row_end)      # top edge of last row in block
   
-  # Raster y-axis usually goes from top (max) to bottom (min), so set correct extent
+  # Raster y-axis usually goes from top (max) to bottom (min), so set correct 
+  # extent
   y_min <- min(y_start, y_end)
   y_max <- max(y_start, y_end)
   
@@ -40,7 +69,7 @@ process_block <- function(i) {
   # Define spatial extent to crop
   ext_block <- ext(x_min, x_max, y_min, y_max)
   
-  block <- crop(HFI, ext_block)
+  block <- crop(stacked_rasters, ext_block)
   
   as.data.frame(block, xy = TRUE)
 }
@@ -59,10 +88,27 @@ write.csv(newdf, file = "/home/lmills96/Documents/GDMP/Data/newdf.csv")
 
 
 # -------------------------------------------------------------------------
-# Annotated for loop:
+# Annotated code:
 # -------------------------------------------------------------------------
 
-# defines a function that takes a single input i - i.e., represents the block 
+# Note: do not need to create an empty list (chunks <- list()) here because we
+# are NOT using a for loop. future_lapply() is for parallel processing
+    # i.e., a for loop executes iterations one after another in a sequential 
+    # order (each iteration must complete before the next one begins) ---
+    # future_lapply() enables parallel / asynchronous execution of tasks; it 
+    # distributes the iterations across multiple cores 
+    # future_lapply() is beneficial when iterations are independent of each 
+    # each other which allows them to run concurrently 
+# chunks <- future_lapply(1:blocks, process_block) already constructs and fills
+# a list for you
+
+# To parallelize code, could also do this:
+#CORES <- future::availableCores(logical = FALSE) - 1
+#plan(multisession, workers = CORES)
+  # this returns the number of available cores and leaves one core free ---
+  # didn't do this because multiple people using various cores on Linux 
+
+# Defines a function that takes a single input i - i.e., represents the block 
 # index [from 1 to block 10])
 process_block <- function(i) {
   
@@ -107,21 +153,21 @@ process_block <- function(i) {
   #yFromRow gives the y-coordinate (center) of that pixel in that row 
       # a raster is a grid of pixels coverign a geographic area - each row in 
       # the raster corresponds to a horizontal slize of pixels. each pixel has 
-      # a specific spatial location defined by (x,y) --- yFromRow(HFI, row_start)
+      # a specific spatial location defined by (x,y) --- yFromRow(HFI,row_start)
       # returns the y-coord (lat) of the center of the pixels in that specific 
       # row. this is allowing you to determine which latitudes are in that block
   y_start <- yFromRow(HFI, row_start)  # top edge of first row in block
   y_end <- yFromRow(HFI, row_end)      # top edge of last row in block
   
-  # raster y-axis usually goes from top (max) to bottom (min), so set correct extent
-  # ensures the y_min is the smaller (southern/lower) coordinate and y_max is 
-  # larger (northern/higher) 
-      # this orders the coordinates to ensure that y_min is always the lower value
-  # yFromRow() gets teh real-world coordinates for your block of rows vs. min()
+  # raster y-axis usually goes from top (max) to bottom (min), so set correct 
+  # extent ensures the y_min is the smaller (southern/lower) coordinate and 
+  # y_max is larger (northern/higher) 
+      # this orders the coords to ensure that y_min is always the lower value
+  # yFromRow() gets the real-world coordinates for your block of rows vs. min()
     # ensures they are properly ordered when creating the bbox / spatial extent
       # ymin()/ymax() refers to latitude/northing
-          # ymax(HFI) is the TOP edge of the raster (north-most lat or max northing)
-          # ymin(HFI) is the BOTTOM edge of the raster (sourth-most lat or min northing)
+          # ymax(HFI) = the TOP edge of raster (north-most lat/max northing)
+          # ymin(HFI) = the BOTTOM edge of raster (south-most lat/min northing)
               # thus, this is the VERTICAL extent (height) of raster
   y_min <- min(y_start, y_end)
   y_max <- max(y_start, y_end)
@@ -130,11 +176,11 @@ process_block <- function(i) {
   # getting the FULL horizontal extent of the raster (leftmost and rightmost 
   # coordinates) --- ensuring we cover all columns in width
       # xmin()/xmax() refers to width, not height:  
-          # they refer to the longtiude/easting 
-          # xmin(HFI) is the LEFT edge of the raster (west-most long or min easting)
-          # xmax(HFI) is the RIGHT edge of the raster (east-most long or max easting)
+          # they refer to the longitude/easting 
+          # xmin(HFI) = the LEFT edge of  raster (west-most long/min easting)
+          # xmax(HFI) = the RIGHT edge of  raster (east-most long/max easting)
               # thus, this is the HORIZONTAL extent (width) of raster 
-  # you don't need xmin(x_start, x_end) because the block spans all columns / full
+  # don't need xmin(x_start, x_end) because the block spans all columns / full
     # width (you're looking at rows, not columns)
   x_min <- xmin(HFI)
   x_max <- xmax(HFI)
@@ -152,15 +198,14 @@ process_block <- function(i) {
   as.data.frame(block, xy = TRUE)
 }
 
-
-# parallel processing
+# Parallel processing
 # (1:blocks): each i will be passed into process_block
 # process_block: takes block i, determines the rows to extract from the raster,
   # crops the raster to these rows, then returns a df 
 # chunks is now a list of dataframes
 chunks <- future_lapply(1:blocks, process_block)
 
-# combining all into one data frame
-# binds all dataframes into one --- do.call() is used when you want to apply a 
+# Combining all into one data frame
+# Binds all dataframes into one --- do.call() is used when you want to apply a 
   # function (like rbind) to each element of a list
 newdf <- do.call(rbind, chunks)
