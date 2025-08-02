@@ -7,15 +7,16 @@ library(gratia)
 
 # Load MPdf dataset 
 MPdf <- read.csv(".Data/MPdf.csv")
+MPdf$study <- as.factor(MPdf$study)
 
 # GAM model:
 model <- gam(Items_kg ~
                # global terms
                s(HFI, k = 10, bs = "ad") + 
                s(sqrt(max_depth_cm), k = 5) +
-               s(elevation_m, k = 6) + 
-               #ti(Elevation_km, HFI, k = 5, bs = "tp"),# + #don't need study in here b/c interaction term
-               #ti(Max_Depth_cm, HFI, k = 5, bs = "tp") +
+               s(log10(elevation_m+3), k = 6) + 
+               #ti(log10(elevation_m+3), HFI, k = 5, bs = "tp") +  # don't need study in here b/c interaction term
+               #ti(max_depth_cm, HFI, k = 5, bs = "tp") +
                # study-level terms
                s(study, bs = 're'), #random int - it doesn't really have random slopes 
              #weights = Weights,
@@ -24,11 +25,11 @@ model <- gam(Items_kg ~
              method = "REML",
              na.action = na.fail)
 
-plot(model, pages = 1, scale = 0, scheme = 1)
+plot(model, pages = 1, scale = 0, scheme = 2)
 
 draw(model)
 draw(model, select = "s(HFI)")
-draw(model, select = "s(sqrt(max_depth_cm))")
+draw(model, select = "s(sqrt(max_depth_cm))", residuals = T)
 draw(model, select = "s(elevation_m)")
 
 # Note: the 'partial effect' on the y-axis of the above plot represents the 
@@ -61,4 +62,31 @@ summary(model)
   #the rest of the variables weren't explaining that much
   #partial effect on the y
 
-saveRDS(model, file = './Data/MPdf_model.RDS')
+# Adding residuals to MPdf based off model
+MPdf$residuals <- residuals(model, type = "working") 
+
+# Adding predictions to MPdf based off model
+MPdf$predictions <- predict(model, newdata = MPdf, type = "response",
+                            exclude = c("s(sqrt(max_depth_cm))", 
+                                       "s(elevation_m)", 
+                                       "study"))
+
+# Saving model and MPdf
+saveRDS(model, file = './Data/model.RDS')
+write.csv(MPdf, file = "./Data/MPdf.csv", row.names = FALSE)
+
+
+
+
+
+#MPdf$predictions <- predict(model, newdata = MPdf, type = "response")
+                            
+# test <- predict(model, 
+#                 newdata = data.frame(HFI = seq(0,50, by = 0.01), 
+#                                      elevation_m = 100, 
+#                                      max_depth_cm = 1, 
+#                                      study = as.factor(1)), 
+#                 exclude = c("s(sqrt(max_depth_cm))", 
+#                             "s(elevation_m)", 
+#                             "study"), 
+#                 type = "response")
