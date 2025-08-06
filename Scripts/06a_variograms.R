@@ -1,13 +1,20 @@
 
+## Determining which variograms from MPdf are viable / could be used for RK
+
 # Load required packages 
 library(sf)
 library(sp)
 library(terra)
 library(gstat)
 
+# Load MPdf dataset 
+MPdf <- read.csv("./Data/MPdf.csv")
+
 #--------------------------------------------------------------------------
 # Testing the variogram for each study  
 #--------------------------------------------------------------------------
+
+# Excluding studies 8,12,18,29,34,36,37,42,44,48,49,50,54,59,60 
 
 # --------------------------
 # STUDY 1 

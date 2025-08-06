@@ -1,4 +1,3 @@
-## Breaking up large raster into blocks 
 
 # ---------------------------------------------------------------------------
 # Load required items
@@ -11,6 +10,9 @@ library(future.apply)
 # Load required rasters
 HFI <- rast("/home/lmills96/Documents/GDMP/Rasters/HFI_processed.tif")
 elevation_m <- rast("/home/lmills96/Documents/GDMP/Rasters/elev_processed.tif")
+
+# Load MPdf dataset 
+MPdf <- read.csv("./Data/MPdf.csv")
 
 # ---------------------------------------------------------------------------
 # Decrease raster resolutions
@@ -29,36 +31,68 @@ elevation_m <- terra::resample(elevation_m, HFI, method = "bilinear")
 writeRaster(HFI, filename = "/home/lmills96/Documents/GDMP/Rasters/HFI_300res.tif", overwrite = TRUE)
 writeRaster(elevation_m, filename = "/home/lmills96/Documents/GDMP/Rasters/elev_300res.tif", overwrite = TRUE)
 
+
+#----------------------------------------------------------------------
+# Get bounding box of case example 
+#----------------------------------------------------------------------
+
+# Using study # 2 for a case study/example: 
+# 100 observations in Korea 
+# Note: coordinates were given in paper (table 2), along with [MP] broken 
+# up into sizes. Particles <1mm and 1-5mm were added together to obtain
+# total [MP]
+
+# Subset data
+MPdf_study <- MPdf[MPdf$study == "2",]
+
+# Convert df to sf object
+locations_study <- st_as_sf(MPdf_study, coords = c("x", "y"), crs = crs(HFI))
+same.crs(locations_study, HFI) # TRUE
+
+# Determine the bounding box from coordinates of study # 2
+EXT <- ext(locations_study)
+
+# Calculate height & width of bbox
+# EXT[1] = xmin (left edge of raster)
+# EXT[2] = xmax (right edge of raster)
+# EXT[3] = ymin (bottom edge of raster)
+# EXT[4] = ymax (top edge of raster)
+height <- EXT[4] - EXT[3]
+width <- EXT[2] - EXT[1]
+
+# Add a buffer around edge of bbox (using max() to ensure that the buffer is 
+# large enough to cover both dimensions symmetrically - choosing the larger
+# of the two so that both x and y directions are padded equally by the same
+# size)
+size <- max(height*2, width*2)
+
+# Center the extent to keep the same midpoint after adding the buffer
+x_center <- (EXT[1] + EXT[2])/ 2 # finding midpoint / avg between the two coords
+y_center <- (EXT[3] + EXT[4])/ 2 # finding midpoint / avg between the two coords
+# Note: x_center is the midpoint of original raster
+
+# Create a new square extent
+# Note: 'size' is the desired FULL length side of the new bbox (including 
+# the buffer)
+# Note: dividing by 2 here to define how far from center to extend bbox - 
+# by dividing by 2, we are evenly buffering the area 
+new_EXT <- ext(x_center - size/2, # defines a bbox that extends half of 'size' to left of midpoint...
+               x_center + size/2, # ...and half of 'size' to the right (total width = size)
+               y_center - size/2,
+               y_center + size/2)
+
 # ---------------------------------------------------------------------------
-# Combine the rasters
+# Crop rasters to bounding box
 # ---------------------------------------------------------------------------
 
-# Combining the HFI and elevation rasters into a layered raster
-# Note: must ensure extent and resolution are the same
-stacked_rasters <- c(HFI, elevation_m, warn = TRUE)
+# Crop rasters to match bbox
+HFI_crop <- 
 
-# Confirm it worked
-nlyr(stacked_rasters) # 2
 
-# Save stacked raster
-writeRaster(stacked_rasters, filename = "/home/lmills96/Documents/GDMP/Rasters/stacked_rasters.tif", overwrite = TRUE)
 
-# ---------------------------------------------------------------------------
-# Determining how many chunks to break raster into
-# ---------------------------------------------------------------------------
 
-# Determine how many rows in raster
-  # Note: only need to look at one raster as they are both the exact same
-nrow(HFI) # 58580 
 
-# Manually divide raster by rows
-rows <- nrow(HFI) # 58580 rows
 
-# Define the number of blocks 
-blocks <- 10
-
-# Dividing the raster into 10 chunks (5858 rows each)
-rows_per_block <- ceiling(rows / blocks)
 
 # ---------------------------------------------------------------------------
 # Creating the function to parallelize code 
@@ -232,3 +266,26 @@ chunks <- future_lapply(1:blocks, process_block)
 # Binds all dataframes into one --- do.call() is used when you want to apply a 
   # function (like rbind) to each element of a list
 newdf <- do.call(rbind, chunks)
+
+
+
+
+
+
+# OLD - LIKELY DON'T NEED TO DO THIS ANYMORE
+# # ---------------------------------------------------------------------------
+# # Determining how many chunks to break raster into
+# # ---------------------------------------------------------------------------
+# 
+# # Determine how many rows in raster
+#   # Note: only need to look at one raster as they are both the exact same
+# nrow(HFI) # 58580 
+# 
+# # Manually divide raster by rows
+# rows <- nrow(HFI) # 58580 rows
+# 
+# # Define the number of blocks 
+# blocks <- 10
+# 
+# # Dividing the raster into 10 chunks (5858 rows each)
+# rows_per_block <- ceiling(rows / blocks)
