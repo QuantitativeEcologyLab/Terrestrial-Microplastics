@@ -23,10 +23,12 @@ mp_coord <- MPdf[,-c(1:12,15)]
 # Model Prediction 
 # ----------------------------------------------------------------------
 
-#with data points 
+# Exponentiate MP_prediction_model to put it back on the response scale
+MP_pred <- exp(MP_prediction_model)
+
 #model_prediction_map <- 
   ggplot() +
-  geom_spatraster(data = MP_prediction_model, maxcell = 5e+06) +
+  geom_spatraster(data = MP_pred, maxcell = 5e+06) +
   geom_point(data = mp_coord, aes(x = x, y = y), col = "white", size = 1.1, shape = 16) +
   geom_point(data = mp_coord, aes(x = x, y = y), col = "red", size = 0.9, shape = 16) +
   scale_fill_viridis(name = "",
@@ -72,7 +74,8 @@ ggsave("./Figures/model_prediction_map.png", plot = model_prediction_map, width 
 # Kriging Model
 # ----------------------------------------------------------------------
 
-#var1 <- exp(var1_resampled) 
+# Exponentiate var1_resampled to put it back on the response scale
+var1 <- exp(var1_resampled) 
 
 #kriging_map <- 
   ggplot() +

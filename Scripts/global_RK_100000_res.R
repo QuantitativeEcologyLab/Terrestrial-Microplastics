@@ -14,8 +14,8 @@ library(tidyverse)
 library(ggplot2)
 
 # Load required rasters 
-HFI <- rast("./Rasters/HFI_raster_processed.tif")
-Elevation_m <- rast("./Rasters/elev_raster_processed.tif")
+HFI <- rast("./Rasters/HFI_processed.tif")
+elevation_m <- rast("./Rasters/elev_300res.tif")
 
 # Load MPdf dataset 
 MPdf <- read.csv("./Data/MPdf.csv")
@@ -27,24 +27,22 @@ model <- readRDS("./Data/MPdf_model.RDS")
 #newdf <- readRDS("./Data/MP_Prediction_newdf.RDS")
 
 # Load the GAM prediction raster
-MP_prediction_model <- rast("./Rasters/GAM_prediction_model.tif")
+# MP_prediction_model <- rast("./Rasters/GAM_prediction_model.tif")
 
 # Load Kriged residuals
-kriging_100000 <- loadRDS("./Data/kriging_100000.RDS")
+# kriging_100000 <- loadRDS("./Data/kriging_100000.RDS")
 
 # Load var1 raster
-var1_resampled <- rast("./Rasters/var1_resampled.tif")
+# var1_resampled <- rast("./Rasters/var1_resampled.tif")
 
 # Define the projection system
-crs_wintri <- "ESRI:53018"
+crs_Mollweide <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs"
 
 # Get world_wintri:
 # Get world boundaries for clipping (not critical, but makes maps nicer looking)
 world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
-#Drop Antarctica
-world_sf <- subset(world_sf, continent != "Antarctica")
 # Reproject
-world_wintri <- lwgeom::st_transform_proj(world_sf, crs = "ESRI:53018")
+world_wintri <- lwgeom::st_transform_proj(world_sf, crs = crs(HFI))
 # Convert to SpatVector class
 world_wintri <- vect(world_wintri) 
 
@@ -59,7 +57,10 @@ newdf <- terra::as.data.frame(HFI, xy = TRUE, row.names = FALSE)
 names(newdf)[3] <- "HFI"
 
 # Extract elevation from elevation_global SpatRaster (Elevation_m)
-el_values <- terra::extract(Elevation_m, cbind(newdf$x, newdf$y))
+
+newdf <- terra::as.data.frame(elev, xy = TRUE, row.names = FALSE)
+
+el_values <- terra::extract(elevation_m, cbind(newdf$x, newdf$y))
 #el_values_clipped <- terra::extract(clipped_elev, cbind(newdf$x, newdf$y))
 
 
@@ -100,22 +101,29 @@ mp_pred_model_pic <- plot(MP_prediction_model)
 # Import the residuals
   # Averaging all residuals that have the same coordinates so that there are
   # only one value at each pair of coordinates
-MPdf$residuals <- MPdf$Items_kg - predict(model, type = "link")
-data <- aggregate(residuals ~ x + y, data = MPdf, mean)
+# MPdf$residuals <- MPdf$Items_kg - predict(model, type = "link")
+# data <- aggregate(residuals ~ x + y, data = MPdf, mean)
+MPdf$residuals <- residuals(model, type = "working") 
+data <- aggregate(residuals ~ x + y, data = MPdf, FUN = 
+                    "median")
+
 
 # Convert to an sf object
 vg.data <- st_as_sf(vect(data[,c("x", "y", "residuals"),],
                          geom=c("x", "y"),
-                         crs="ESRI:53018"))
+                         crs=crs(HFI)))
 
 # Plot to make sure it looks OK
-plot(Elevation_m)
+plot(elevation_m)
 points(vg.data)
 
 
 # Empirical variogram for the MP model residuals
 mp.vg <- variogram(residuals ~ 1, data  = vg.data)
-plot(mp.vg, ylim = c(0, 9e9))
+plot(mp.vg)
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500)
+plot(mp.vg, ylim = c(0, 7))
 
 # Note: 'Fit' model --- this is the result of fitting a theoretical variogram
 # model to the empirical variogram, providing estimates for model parameters
@@ -125,8 +133,30 @@ plot(mp.vg, ylim = c(0, 9e9))
 # (moving the y to 0 - by definition the mean of my residuals is mean = 0) ->
 # if the mean wasn't = 0 then my predictions are off by a certain amount so
 # E(e) = E(y-mu) = 0
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
+
+# Testing variograms  ---------------------------------------------
+
+# TRY FROM ONE STUDY AT A TIME 
+# variogram
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000, width = 10)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
+
+
+# variogram
+mp.vg <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
+
+# variogram
+mp.vg <- variogram(residuals ~ 1, data  = vg.data)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE, psill = 99000000, range = 73000))
 plot(mp.vg, mp.vg.fit)
+
 
 
 # Global Kriging ------------------------------------------------------
@@ -170,22 +200,23 @@ tester_cropped <- tester %>%
 var1_resampled <- terra::resample(tester_cropped, MP_prediction_model, method = "bilinear")
   #writeRaster(var1_resampled, filename = "./Rasters/var1_resampled.tif", overwrite = TRUE)
 plot(var1_resampled)
+points(vg.data, col = "red", pch = 20)
 # Currently not in the same crs?
-var1_resampled1 <- var1_resampled
-crs(var1_resampled1) <- crs(MP_prediction_model)
-plot(var1_resampled1)
+# var1_resampled1 <- var1_resampled
+# crs(var1_resampled1) <- crs(MP_prediction_model)
+# plot(var1_resampled1)
 
 #----------------------------------------------------------------------
 # Combined: regression-Kriging predictions
 #----------------------------------------------------------------------
 
 # Get the regression-Kriging predictions by summing the two
-RK <- MP_prediction_model + var1_resampled1
+RK <- MP_prediction_model + var1_resampled
 
 # Convert back to the correct scale 
 RK <- exp(RK) 
 plot(RK)
-  #writeRaster(RK, filename = "./Rasters/RK_raster.tif", overwrite = TRUE)
+  writeRaster(RK, filename = "./Rasters/RK_raster.tif", overwrite = TRUE)
 
 
 
