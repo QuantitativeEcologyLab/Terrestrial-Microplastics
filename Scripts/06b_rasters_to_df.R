@@ -12,15 +12,15 @@ library(future.apply)
 library(sf)
 
 # # Load required rasters
-HFI <- rast("/home/lmills96/Documents/GDMP/Rasters/HFI_processed.tif")
-elevation_m <- rast("/home/lmills96/Documents/GDMP/Rasters/elev_processed.tif")
+HFI <- rast("./Rasters/HFI_processed.tif")
+elevation_m <- rast("./Rasters/elev_processed.tif")
 
 # Load MPdf dataset 
-MPdf <- read.csv("/home/lmills96/Documents/GDMP/Data/MPdf.csv")
+MPdf <- read.csv("./Data/MPdf.csv")
 MPdf$study <- as.factor(MPdf$study)
 
 # Load gam 
-model <- readRDS("/home/lmills96/Documents/GDMP/Data/model.RDS")
+model <- readRDS("./Data/model.RDS")
 
 # ---------------------------------------------------------------------------
 # Decrease raster resolutions
@@ -42,8 +42,8 @@ elevation_m <- terra::resample(elevation_m, HFI, method = "bilinear")
   ext(HFI) == ext(elevation_m) # TRUE
 
 # Save updated rasters
-writeRaster(HFI, filename = "/home/lmills96/Documents/GDMP/Rasters/HFI_300res.tif", overwrite = TRUE)
-writeRaster(elevation_m, filename = "/home/lmills96/Documents/GDMP/Rasters/elev_300res.tif", overwrite = TRUE)
+writeRaster(HFI, filename = "./Rasters/HFI_300res.tif", overwrite = TRUE)
+writeRaster(elevation_m, filename = "./Rasters/elev_300res.tif", overwrite = TRUE)
 
 #----------------------------------------------------------------------
 # Get bounding box of case example 
@@ -95,14 +95,16 @@ new_EXT <- ext(x_center - size/2, # defines a bbox that extends half of 'size' t
                x_center + size/2, # ...and half of 'size' to the right (total width = size)
                y_center - size/2,
                y_center + size/2)
+# Save for RK script
+saveRDS(new_EXT, file = "./Data/new_EXT.RDS")
 
 # ---------------------------------------------------------------------------
 # Crop rasters to bounding box
 # ---------------------------------------------------------------------------
 
 # Required rasters
-HFI <- rast("/home/lmills96/Documents/GDMP/Rasters/HFI_300res.tif")
-elevation_m <- rast("/home/lmills96/Documents/GDMP/Rasters/elev_300res.tif")
+HFI <- rast("./Rasters/HFI_300res.tif")
+elevation_m <- rast("./Rasters/elev_300res.tif")
 
 # Crop rasters to bbox
 HFI_crop <- terra::crop(HFI, new_EXT)
@@ -116,9 +118,9 @@ same.crs(HFI_crop, elev_crop) # TRUE
 res(HFI_crop) == res(elev_crop) # TRUE
 ext(HFI_crop) == ext(elev_crop) # TRUE
 
-# Save updated rasters for Korea only
-writeRaster(HFI_crop, filename = "/home/lmills96/Documents/GDMP/Rasters/HFI_crop.tif", overwrite = TRUE)
-writeRaster(elev_crop, filename = "/home/lmills96/Documents/GDMP/Rasters/elev_crop.tif", overwrite = TRUE)
+# Save updated rasters for China only
+writeRaster(HFI_crop, filename = "./Rasters/HFI_crop.tif", overwrite = TRUE)
+writeRaster(elev_crop, filename = "./Rasters/elev_crop.tif", overwrite = TRUE)
 
 # ---------------------------------------------------------------------------
 # Convert rasters to dataframe
@@ -152,5 +154,5 @@ newdf$mu <- predict(model,
                     na.rm = TRUE)
 head(newdf)
 
-# Save newdf 
-saveRDS(newdf, file = "/home/lmills96/Documents/GDMP/Data/newdf.RDS")
+# Save for RK script
+saveRDS(newdf, file = "./Data/newdf.RDS")
