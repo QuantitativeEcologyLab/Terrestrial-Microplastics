@@ -16,7 +16,7 @@ library(ape)
 # Load MPdf dataset 
 MPdf <- read.csv("./Data/MPdf.csv")
 
-# Note: see next last section for each study's variogram
+# Note: see last section for each study's variogram
 
 #--------------------------------------------------------------------------
 # Determining mean range, sill, and nugget for all viable variograms
@@ -103,11 +103,11 @@ for (i in seq_along(vg_param)) {
   nugget[i] <- vg.fit$psill[1]
 }
 
+
 # Determine mean values
 mean_range <- mean(range) # 8402.096
 mean_sill <- mean(sill) # 9.460706
 mean_nugget <- mean(nugget) # 4.713404
-
 
 # Create empty data frame for variogram points
 vg_points <- data.frame()
@@ -125,35 +125,28 @@ for (i in seq_along(vg_param)) {
   vg_points <- bind_rows(vg_points, vg_df)
 }
 
-# Create the variogram line with mean values above for plot
+# Create the variogram line with mean values for plot
 mean_vg_line <- variogramLine(
   vgm(psill = mean_sill - mean_nugget, # partial sill here
       model = "Sph", 
       nugget = mean_nugget, 
       range = mean_range),
-  maxdist = max(vg_points$dist)
-)
+  maxdist = max(vg_points$dist))
 
 #vg_plot <- 
   ggplot() +
   geom_point(data = vg_points, aes(x = dist, y = gamma), alpha = 0.3) +
-  geom_line(data = mean_vg_line, aes(x = dist, y = gamma), color = "red", size = 1.2) +
+  # reminder: using partial sill for plot
+  geom_line(data = mean_vg_line, aes(x = dist, y = gamma), color = "red", size = 1.2) + 
   theme_bw()
 
-ggsave(vg_plot, file = "./Figures/vg_plot.png")
+  ggsave(vg_plot, file = "./Figures/vg_plot.png")
 
 
-# Trying to fit a single variogram for all 39 studies
-vg_model <- fit.variogram(object = vg_points, 
-                          model = vgm(psill - 1, model = "Sph", range = 1, nugget = 0.1))
+# ------------------------------
+# One variogram for all studies:
+# ------------------------------
 
-
-plot(all_vg_points$dist, all_vg_points$gamma, pch = 16, col = "grey")
-lines(variogramLine(vg_model, maxdist = max(all_vg_points$dist)), col = "red", lwd = 2)
-
-
-
-# All 39 studies ------------------------------------------
 data <- aggregate(residuals ~ x + y, data = MPdf_vg, FUN = 
                     "median")
 
