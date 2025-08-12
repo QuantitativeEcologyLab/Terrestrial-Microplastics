@@ -6,15 +6,144 @@ library(sf)
 library(sp)
 library(terra)
 library(gstat)
+library(dplyr)
+library(ggplot2)
+library(forecast)
+library(gridExtra)
+library(nlme)
+library(ape)
 
 # Load MPdf dataset 
 MPdf <- read.csv("./Data/MPdf.csv")
 
+# Note: see next last section for each study's variogram
+
 #--------------------------------------------------------------------------
-# Testing the variogram for each study  
+# Determining mean range, sill, and nugget for all viable variograms
 #--------------------------------------------------------------------------
 
-# Excluding studies 8,12,18,29,34,36,37,42,44,48,49,50,54,59,60 
+# Excluding studies where variograms are not viable (either too little data or
+  # non-stationary data)
+    # Note: non-stationary in this context is in regards to the semivariance
+    # behaving differently in different spatial directions (i.e., mean changes
+    # depending on location). Variograms without a clear sill may indicate 
+    # large-scale trends or a non-constant mean and thus the underlying spatial 
+    # process is not constant throughout the study area
+
+
+# Data frame consisting only of viable variograms
+MPdf_vg <- MPdf[!MPdf$study %in% c("4","8","11","12","18","20","22","29","34",
+                                   "36","37","38","41","42","44","48","49",
+                                   "50","51","54","55","59","60"),]
+
+
+# Create a list of the studies for the for loop
+# Note: does not need to be a list as for loop can iterate over vectors
+study_IDs <- unique(MPdf_vg$study)
+
+# Each variogram has different parameters; make a list of each 
+vg_param <- list(
+  "1" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 100)),
+  "2" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)),
+  "3" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 100000)),
+  "5" = (variogram(residuals ~ 1, data  = vg.data)),
+  "6" = (variogram(residuals ~ 1, data  = vg.data, width = 1)),
+  "7" = (variogram(residuals ~ 1, data  = vg.data)),
+  "9" = (variogram(residuals ~ 1, data  = vg.data)),
+  "10" = (variogram(residuals ~ 1, data  = vg.data)),
+  "13" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 150000)),
+  "14" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 1500, width = 10)),
+  "15" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 2000, width = 5)),
+  "16" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 1000)),
+  "17" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 10000, width = 10)),
+  "19" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 3000)),
+  "21" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)),
+  "23" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 300, width = 20)),
+  "24" = (variogram(residuals ~ 1, data  = vg.data)),
+  "25" = (variogram(residuals ~ 1, data  = vg.data)),
+  "26" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 9000)),
+  "27" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 300000)),
+  "28" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 100)),
+  "30" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 70000)),
+  "31" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 40000, width = 2500)),
+  "32" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 40000)),
+  "33" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 400000, width = 500)),
+  "35" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 50000, width = 4500)),
+  "39" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 30000)),
+  "40" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 500000, width = 900)),
+  "43" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 900, width = 10)),
+  "45" = (variogram(residuals ~ 1, data  = vg.data)),
+  "46" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 800, width = 5)),
+  "47" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 1)),
+  "52" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 150000)),
+  "53" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 200, width = 10)),
+  "56" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 20, width = 1)),
+  "57" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 12000, width = 100)),
+  "58" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 250000, width = 100)),
+  "61" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 80000)),
+  "62" = (variogram(residuals ~ 1, data  = vg.data, cutoff = 800)))
+
+# Create empty vectors for parameters
+range <- numeric(length(vg_param))
+sill <- numeric(length(vg_param))
+nugget <- numeric(length(vg_param))
+
+# Create a for loop
+for (i in seq_along(vg_param)) {
+  
+  study_IDs <- names(vg_param)[i] 
+  vg <- vg_param[[i]] # need double brackets to extract 'i'
+  
+  # Fitting the variogram 
+  vg.fit <- fit.variogram(vg, vgm("Sph", nugget = TRUE))
+  
+  # Extract range, sill, and nugget 
+  range[i] <- vg.fit$range[2]
+  sill[i] <- vg.fit$psill[1] + vg.fit$psill[2]
+  nugget[i] <- vg.fit$psill[1]
+}
+
+# Determine mean values
+mean_range <- mean(range) # 8402.096
+mean_sill <- mean(sill) # 9.460706
+mean_nugget <- mean(nugget) # 4.713404
+
+
+# Create empty data frame for variogram points
+vg_points <- data.frame()
+
+# Obtain dist (lag distance) and gamma (semivariance) values for each variogram
+for (i in seq_along(vg_param)) {
+  study_IDs <- names(vg_param)[i]
+  vg <- vg_param[[i]]
+  
+  # Add study ID to each variogram point
+  vg_df <- as.data.frame(vg)
+  vg_df$study <- study_IDs
+  
+  # Combine into master data frame
+  vg_points <- bind_rows(vg_points, vg_df)
+}
+
+# Create the variogram line with mean values above for plot
+mean_vg_line <- variogramLine(
+  vgm(psill = mean_sill, model = "Sph", nugget = mean_nugget, range = mean_range),
+  maxdist = max(vg_points$dist)
+)
+
+#vg_plot <- 
+  ggplot() +
+  geom_point(data = vg_points, aes(x = dist, y = gamma), alpha = 0.3) +
+  geom_line(data = mean_vg_line, aes(x = dist, y = gamma), color = "red", size = 1.2) +
+  theme_bw()
+
+ggsave(vg_plot, file = "./Figures/vg_plot.png")
+
+
+
+##--------------------------------------------------------------------------
+# Producing a variogram for each study individually
+##--------------------------------------------------------------------------
 
 # --------------------------
 # STUDY 1 
@@ -48,11 +177,16 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 10)
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NO GOOD PLATEAU AT SILL?
+
+# Best variogram:
+vg.1 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 100)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 2
@@ -80,7 +214,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# LOOKS OK MAYBE? NOT SURE - INTITIAL ONE LOOKS OK BUT THEN NOT SURE IF OTHERS LOOK BETTER OR NOT
+
+# Best variogram:
+vg.2 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 3
@@ -118,7 +257,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100000, width = 3000
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# TOO MANY POINTS ABOVE LINE THAT IT DOESN'T PLATEAU NICELY?
+
+# Best variogram:
+vg.3 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 4
@@ -142,7 +286,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# ONLY ONE COORDINATE FOR ALL 9 VALUES FOR THIS STUDY SO CAN'T COMPUTE A VARIOGRAM?
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 5
@@ -171,7 +315,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, width = 1000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# LOOKS OK MAYBE?
+
+# Best variogram:
+vg.5 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 6
@@ -200,7 +349,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT
+
+# Best variogram:
+vg.6 <- variogram(residuals ~ 1, data  = vg.data, width = 1)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 7
@@ -234,7 +388,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# TOO MANY POINTS ABOVE LINE THAT IT DOESN'T PLATEAU NICELY?
+
+# Best variogram:
+vg.7 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 8
@@ -268,7 +427,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 200000, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK VERY GOOD?
+# TOO LITTLE DATA / NOT INCLUDING 
 
 # --------------------------
 # STUDY 9
@@ -302,7 +461,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, width = 10000, cutoff = 35000
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# INITIAL ONE LOOKS OK BUT THEN NOT VERY GOOD IN OTHER ONES?
+
+# Best variogram:
+vg.9 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 10
@@ -331,7 +495,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT A VERY OBVIOUS TREND?
+
+# Best variogram:
+vg.10 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 11
@@ -360,7 +529,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# ONLY 3 DIFFERENT COORDS SO NOT MUCH TO WORK WITH HERE?
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 12
@@ -394,7 +563,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT?
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 13
@@ -433,7 +602,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 200000, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT? NOT A VERY CLEAR TREND?
+
+# Best variogram:
+vg.13 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 150000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 14
@@ -462,7 +636,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1500, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT?
+
+# Best variogram:
+vg.14 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1500, width = 10)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 15
@@ -491,7 +670,17 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 4000, width = 5)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT?
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 2000, width = 5)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
+
+# Best variogram:
+vg.15 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 2000, width = 5)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 16
@@ -525,7 +714,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 3000, width = 5)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE? TOP RIGHT CORNER THO?
+
+# Best variogram:
+vg.16 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 17
@@ -554,7 +748,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT?
+
+# Best variogram:
+vg.17 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000, width = 10)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 18
@@ -583,7 +782,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 5000, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT --- FEW DATA POINTS
+# TOO LITTLE DATA / NOT INCLUDING 
 
 # --------------------------
 # STUDY 19
@@ -622,7 +821,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 3000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT? NOT REALLY ANY CLEAR TREND ABOVE PLATEAU
+
+# Best variogram:
+vg.19 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 3000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 20
@@ -656,7 +860,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 3000, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT?
+# TOO LITTLE DATA / NOT INLCUDING
 
 # --------------------------
 # STUDY 21
@@ -695,7 +899,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 15000, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK LIKE ANY CLEAR TREND? --- MAYBE SECOND ONE?
+
+# Best variogram:
+vg.21 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 22
@@ -719,7 +928,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# ONLY ONE COORDINATE SO CAN'T PRODUCE VARIOGRAM
+# TOO LITTLE DATA / NOT INLCUDING
 
 # --------------------------
 # STUDY 23
@@ -753,7 +962,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 300, width = 20)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT - NO CLEAR TRENDS - SECOND ONE MAYBE BEST?
+
+# Best variogram:
+vg.23 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 300, width = 20)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 24
@@ -787,7 +1001,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20000, width = 500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT BUT MAYBE LAST ONE? DESPITE POINTS NEAR TOP?
+
+# Best variogram:
+vg.24 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 25
@@ -821,7 +1040,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100000, width = 3000
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT - NO CLEAR TRENDS - LAST ONE MAYBE?
+
+# Best variogram:
+vg.25 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 26
@@ -860,7 +1084,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT - BUT MAYBE? UNLIKELY WITH THE POINT AT TOP RIGHT CORNER BUT MAYBE 3RD ONE?
+
+# Best variogram:
+vg.26 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 27
@@ -899,7 +1128,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100000, width = 3000
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK LIKE THERE IS ANY TREND?
+
+# Best variogram:
+vg.27 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 300000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 28
@@ -938,7 +1172,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK LIKE THERE IS ANY TREND?
+
+# Best variogram:
+vg.28 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9000, width = 100)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 29
@@ -967,7 +1206,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 200)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# ONLY 3 DATA POINTS - NOT USEFUL
+# TOO LITTE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 30
@@ -1001,7 +1240,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 80000, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK LIKE THERE IS ANY TREND?
+
+# Best variogram:
+vg.30 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 70000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 31
@@ -1040,7 +1284,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 40000, width = 2500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE?
+
+# Best variogram:
+vg.31 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 40000, width = 2500)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 32
@@ -1089,7 +1338,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50000, width = 400)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE?
+
+# Best variogram:
+vg.32 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 40000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 33
@@ -1119,11 +1373,21 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1500, width = 5)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
+
 mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 400000, width = 500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NO CLEAR TREND?
+
+# Best variogram:
+vg.33 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 400000, width = 500)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 34
@@ -1162,7 +1426,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 250, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# NO CLEAR TREND?
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 35
@@ -1201,7 +1465,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50000, width = 4500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NO CLEAR TREND WITH POINT AT TOP RIGHT?
+
+# Best variogram:
+vg.35 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50000, width = 4500)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 36
@@ -1240,7 +1509,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 150, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NO CLEAR TREND WITH POINT AT TOP RIGHT?
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 37
@@ -1269,7 +1538,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT...
+# TOO LITTLE DATA / NOT INLCUDING
 
 # --------------------------
 # STUDY 38
@@ -1298,7 +1567,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# DOESN'T LOOK GREAT...
+# TOO LITTLE DATA / NOT INLCUDING
 
 # --------------------------
 # STUDY 39
@@ -1342,7 +1611,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 30000, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE?
+
+# Best variogram:
+vg.39 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 30000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 40
@@ -1381,7 +1655,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500000, width = 900)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE? THINKING NO.....
+
+# Best variogram:
+vg.40 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500000, width = 900)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 41
@@ -1405,7 +1684,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# ONLY ONE COORDINATE FOR ALL 3 POINTS - CAN'T PRODUCE VARIOGRAM
+# TOO LITTLE DATA / NOT INCLUDING 
 
 # --------------------------
 # STUDY 42
@@ -1434,7 +1713,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500000, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# THINKING NO.....
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 43
@@ -1473,7 +1752,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 900, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE? NOT SURE ON THIS ONE.... 
+
+# Best variogram:
+vg.43 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 900, width = 10)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 44
@@ -1507,7 +1791,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 9500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# THINKING NO.... 
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 45
@@ -1546,7 +1830,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 50000, width = 500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# UNSURE BUT THINKING NO.... 
+
+# Best variogram:
+vg.45 <- variogram(residuals ~ 1, data  = vg.data)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 46
@@ -1591,11 +1880,11 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800, width = 5)
+# Best variogram:
+vg.46 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800, width = 5)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE BUT THINKING NO.... 
 
 # --------------------------
 # STUDY 47
@@ -1620,7 +1909,12 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100)
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 450, width = 1)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
@@ -1629,7 +1923,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT LOOKING GOOD ESPECIALLY BASED ON SO LITTLE DATA FOR THIS STUDY.... 
+
+# Best variogram:
+vg.47 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 1)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 48
@@ -1663,7 +1962,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 100, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT REALLY ANY KIND OF TREND.... 
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 49
@@ -1697,7 +1996,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 70000, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# THINKING NO.... 
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 50
@@ -1731,7 +2030,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800000, width = 500)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT LOOKING GOOD ESPECIALLY BASED ON SO LITTLE DATA FOR THIS STUDY.... 
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 51
@@ -1765,7 +2064,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT MUCH OF A TREND...
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 52
@@ -1819,7 +2118,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 70000, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# MAYBE??? DOESN'T REALLY LOOK GREAT.... 
+
+# Best variogram:
+vg.52 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 150000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 53
@@ -1849,17 +2153,16 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 300, width = 10)
-plot(mp.vg)
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
-plot(mp.vg, mp.vg.fit)
-
 mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 200, width = 10)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# NOT SURE...
 
+# Best variogram:
+vg.53 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 200, width = 10)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 54
@@ -1893,7 +2196,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# DOESN'T LOOK GREAT...
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 55
@@ -1927,7 +2230,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# MAYBE...
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 56
@@ -1971,7 +2274,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# DOESN'T LOOK GREAT...
+
+# Best variogram:
+vg.56 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20, width = 1)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 57
@@ -2001,6 +2309,16 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1300)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 1200, width = 1)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
+
 mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 12000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
@@ -2010,7 +2328,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 12000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# MAYBE?? BUT A LOT OF POINTS ABOVE LINE
+
+# Best variogram:
+vg.57 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 12000, width = 100)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 58
@@ -2049,7 +2372,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 250000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# LOOKS OK MAYBE?
+
+# Best variogram:
+vg.58 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 250000, width = 100)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
 
 # --------------------------
 # STUDY 59
@@ -2088,7 +2416,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 2000, width = 100)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# MAYBE?? 
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 60
@@ -2118,7 +2446,7 @@ plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 5000, width = 10)
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 5000, width = 1)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
@@ -2127,7 +2455,7 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# MAYBE?? DOESN'T LOOK GREAT...
+# TOO LITTLE DATA / NOT INCLUDING
 
 # --------------------------
 # STUDY 61
@@ -2156,7 +2484,12 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 80000)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit) 
-# LOOKS DECENT? 
+
+# Best variogram:
+vg.61 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 80000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit) 
 
 # --------------------------
 # STUDY 62
@@ -2190,4 +2523,16 @@ mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800, width = 50)
 plot(mp.vg)
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
 plot(mp.vg, mp.vg.fit)
-# MAYBE?
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500, width = 50)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
+
+# Best variogram:
+vg.62 <- variogram(residuals ~ 1, data  = vg.data, cutoff = 800)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(vg.62, vgm("Sph", nugget = TRUE))
+plot(vg.62, mp.vg.fit) 
+
+
