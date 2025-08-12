@@ -127,7 +127,10 @@ for (i in seq_along(vg_param)) {
 
 # Create the variogram line with mean values above for plot
 mean_vg_line <- variogramLine(
-  vgm(psill = mean_sill, model = "Sph", nugget = mean_nugget, range = mean_range),
+  vgm(psill = mean_sill - mean_nugget, # partial sill here
+      model = "Sph", 
+      nugget = mean_nugget, 
+      range = mean_range),
   maxdist = max(vg_points$dist)
 )
 
@@ -138,6 +141,32 @@ mean_vg_line <- variogramLine(
   theme_bw()
 
 ggsave(vg_plot, file = "./Figures/vg_plot.png")
+
+
+# Trying to fit a single variogram for all 39 studies
+vg_model <- fit.variogram(object = vg_points, 
+                          model = vgm(psill - 1, model = "Sph", range = 1, nugget = 0.1))
+
+
+plot(all_vg_points$dist, all_vg_points$gamma, pch = 16, col = "grey")
+lines(variogramLine(vg_model, maxdist = max(all_vg_points$dist)), col = "red", lwd = 2)
+
+
+
+# All 39 studies ------------------------------------------
+data <- aggregate(residuals ~ x + y, data = MPdf_vg, FUN = 
+                    "median")
+
+# Convert to an sf object
+vg.data <- st_as_sf(vect(data[,c("x", "y", "residuals"),],
+                         geom=c("x", "y"),
+                         crs=crs(HFI)))
+
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 20000, width = 1000)
+plot(mp.vg)
+mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
+plot(mp.vg, mp.vg.fit)
+
 
 
 
