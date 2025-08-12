@@ -12,10 +12,11 @@ library(sf)
 library(gstat) # for Kriging
 library(tidyverse)
 library(ggplot2)
+library(tidyterra)
 
 # Load required rasters 
-HFI <- rast("./Rasters/HFI_300res.tif")
-elevation_m <- rast("./Rasters/elev_300res.tif")
+HFI <- rast("./Rasters/HFI_crop.tif")
+elevation_m <- rast("./Rasters/elev_crop.tif")
 
 # Load MPdf dataset 
 MPdf <- read.csv("./Data/MPdf.csv")
@@ -23,197 +24,130 @@ MPdf <- read.csv("./Data/MPdf.csv")
 # Load gam 
 model <- readRDS("./Data/MPdf_model.RDS")
 
-# Load newdf --- not needed as GAM prediction raster below is saved
-#newdf <- readRDS("./Data/MP_Prediction_newdf.RDS")
+# Load newdf --- NOT NEEDED as GAM prediction raster is saved below
+newdf <- readRDS("./Data/newdf.RDS")
 
 # Load the GAM prediction raster
-# MP_prediction_model <- rast("./Rasters/GAM_prediction_model.tif")
+MP_prediction_model <- rast("./Rasters/GAM_prediction_model.tif")
 
 # Load Kriged residuals
-# kriging_100000 <- loadRDS("./Data/kriging_100000.RDS")
+# OK_100 <- loadRDS("./Data/OK_100.RDS")
 
 # Load var1 raster
 # var1_resampled <- rast("./Rasters/var1_resampled.tif")
 
-# Define the projection system
-crs_Mollweide <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs"
-
-# Get world_wintri:
-# Get world boundaries for clipping (not critical, but makes maps nicer looking)
-world_sf <- st_as_sf(rworldmap::getMap(resolution = "low"))
-# Reproject
-world_wintri <- lwgeom::st_transform_proj(world_sf, crs = crs(HFI))
-# Convert to SpatVector class
-world_wintri <- vect(world_wintri) 
 
 
-#----------------------------------------------------------------------
-# Get bounding box of case example 
-#----------------------------------------------------------------------
-
-# Using study # 2 for a case study/example: 
-    # 100 observations in Korea 
-    # Note: coordinates were given in paper (table 2), along with [MP] broken 
-      # up into sizes. Particles <1mm and 1-5mm were added together to obtain
-      # total [MP]
-
-# Subset data
-MPdf_study <- MPdf[MPdf$study == "2",]
-
-# Convert df to sf object
-locations_study <- st_as_sf(MPdf_study, coords = c("x", "y"), crs = crs(HFI))
-same.crs(locations_study, HFI) # TRUE
-
-
-# Determine the bounding box from coordinates of study # 2
-EXT <- ext(locations_study)
-
-# Calculate height & width of bbox
-    # EXT[1] = xmin (left edge of raster)
-    # EXT[2] = xmax (right edge of raster)
-    # EXT[3] = ymin (bottom edge of raster)
-    # EXT[4] = ymax (top edge of raster)
-height <- EXT[4] - EXT[3]
-width <- EXT[2] - EXT[1]
-
-# Add a buffer around edge of bbox (using max() to ensure that the buffer is 
-  # large enough to cover both dimensions symmetrically - choosing the larger
-  # of the two so that both x and y directions are padded equally by the same
-  # size)
-size <- max(height*2, width*2)
-
-# Center the extent to keep the same midpoint after adding the buffer
-x_center <- (EXT[1] + EXT[2])/ 2 # finding midpoint / avg between the two coords
-y_center <- (EXT[3] + EXT[4])/ 2 # finding midpoint / avg between the two coords
-    # Note: x_center is the midpoint of original raster
-
-# Create a new square extent
-    # Note: 'size' is the desired FULL length side of the new bbox (including 
-      # the buffer)
-    # Note: dividing by 2 here to define how far from center to extend bbox - 
-      # by dividing by 2, we are evenly buffering the area 
-new_EXT <- ext(x_center - size/2, # defines a bbox that extends half of 'size' to left of midpoint...
-               x_center + size/2, # ...and half of 'size' to the right (total width = size)
-               y_center - size/2,
-               y_center + size/2)
-
-# Crop rasters to match bbox
-HFI_crop <- 
 
 #----------------------------------------------------------------------
 # Predictions from the GAM
 #----------------------------------------------------------------------
 
-
-
-
-
-# Convert SpatRaster into dataframe
-newdf <- terra::as.data.frame(HFI, xy = TRUE, row.names = FALSE)
-names(newdf)[3] <- "HFI"
-
-# Extract elevation from elevation_global SpatRaster (Elevation_m)
-
-newdf <- terra::as.data.frame(elev, xy = TRUE, row.names = FALSE)
-
-el_values <- terra::extract(elevation_m, cbind(newdf$x, newdf$y))
-#el_values_clipped <- terra::extract(clipped_elev, cbind(newdf$x, newdf$y))
-
-
-# Add elevation to the HFI data frame. This will change depending on the
-# resolution you use
-newdf$Elevation_m <- el_values$wc2.1_10m_elev
-
-
-# Define the depth we want to predict for (here just surface level)
-newdf$Max_Depth_cm <- as.integer(0)
-
-# Set a "study" Only needed for predicting
-newdf$Study <- as.factor('prediction')
-head(newdf)
-
-
-# Predict MP concentrations using the fitted model
-newdf$mu <- predict(model,
-                    newdata = newdf,
-                    type = 'link',
-                    se.fit = FALSE,
-                    exclude = "Study",
-                    na.rm = TRUE)
-
-
 # Converting the predictions in the newdf (containing coordinates & predicted 
 # values) into a SpatRaster
-# Converting newdf with coordinates & predicted values into SpatRaster
-MP_prediction_model <- terra::rast(newdf[c("x", "y", "mu")], type="xyz", crs = crs_wintri)
-#writeRaster(MP_prediction_model, filename = "./Rasters/GAM_prediction_model.tif", overwrite = TRUE)
+MP_prediction_model <- terra::rast(newdf[c("x", "y", "mu")], type="xyz", crs = crs(HFI))
+
+# Make sure it looks fine
 mp_pred_model_pic <- plot(MP_prediction_model)
 
+# Save GAM prediction raster
+writeRaster(MP_prediction_model, 
+            filename = "/home/lmills96/Documents/GDMP/Rasters/GAM_prediction_model.tif", 
+            overwrite = TRUE)
 
 #----------------------------------------------------------------------
 # Kriging the residuals
 #----------------------------------------------------------------------
 
-# Import the residuals
-# Averaging all residuals that have the same coordinates so that there are
-# only one value at each pair of coordinates
-# MPdf$residuals <- MPdf$Items_kg - predict(model, type = "link")
-# data <- aggregate(residuals ~ x + y, data = MPdf, mean)
+# Import the residuals 
 MPdf$residuals <- residuals(model, type = "working") 
-data <- aggregate(residuals ~ x + y, data = MPdf, FUN = 
-                    "median")
 
+#Subset data
+MPdf_study <- MPdf[MPdf$study == "61",]
+
+# Aggregate residuals by location
+data <- aggregate(residuals ~ x + y, data = MPdf_study, FUN = 
+                    "median")
 
 # Convert to an sf object
 vg.data <- st_as_sf(vect(data[,c("x", "y", "residuals"),],
                          geom=c("x", "y"),
                          crs=crs(HFI)))
 
-# Plot to make sure it looks OK
-plot(elevation_m)
-points(vg.data)
-
-
-# Empirical variogram for the MP model residuals
-mp.vg <- variogram(residuals ~ 1, data  = vg.data)
+# Empirical variogram for the MP model residuals (study 2)
+mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 80000)
 plot(mp.vg)
 
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 500)
-plot(mp.vg, ylim = c(0, 7))
-
-# Note: 'Fit' model --- this is the result of fitting a theoretical variogram
-# model to the empirical variogram, providing estimates for model parameters
-# that characterize the spatial structure of the residual
-
-# B/c we're doing a variogram of the residuals, it already does this correction
-# (moving the y to 0 - by definition the mean of my residuals is mean = 0) ->
-# if the mean wasn't = 0 then my predictions are off by a certain amount so
-# E(e) = E(y-mu) = 0
+# Note: 'Fit' model is the result of fitting a theoretical variogram
+  # model to the empirical variogram, providing estimates for model parameters
+  # that characterize the spatial structure of the residuals
 mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
-plot(mp.vg, mp.vg.fit)
-
-# Testing variograms  ---------------------------------------------
-
-# TRY FROM ONE STUDY AT A TIME 
-# variogram
-mp.vg <- variogram(residuals ~ 1, data  = vg.data, cutoff = 10000, width = 10)
-plot(mp.vg)
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE))
-plot(mp.vg, mp.vg.fit)
+plot(mp.vg, mp.vg.fit) 
 
 
-# variogram
-mp.vg <- variogram(residuals ~ 1, data  = vg.data)
-plot(mp.vg)
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Sph", nugget = TRUE))
-plot(mp.vg, mp.vg.fit)
+# Convert HFI to an sf crs object
+crs_sf <- sf::st_crs(terra::crs(HFI))
 
-# variogram
-mp.vg <- variogram(residuals ~ 1, data  = vg.data)
-mp.vg.fit <- fit.variogram(mp.vg, vgm("Exp", nugget = TRUE, psill = 99000000, range = 73000))
-plot(mp.vg, mp.vg.fit)
+# Convert the new_EXT bbox to an sf polygon 
+China_bbox_sf <- st_as_sfc(st_bbox(new_EXT))
+
+# Assign the same CRS to China_bbox_sf as other sf objects
+sf::st_crs(China_bbox_sf) <- crs_sf
+
+# Create a grid of square polygons over the bbox (at 100 res)
+grid_10_sf <- st_make_grid(China_bbox_sf, cellsize = c(10, 10))
+
+# Ordinary Kriging of the residuals (will be an sf data frame)
+OK_10 <- 
+  krige(residuals ~ 1, # kriging the residuals = the formula
+        vg.data, # provides coords & residuals from sample locations = the locations
+        grid_10_sf, # gives the locations to predict the residuals at = newdata
+        model = mp.vg.fit) # gives theoretical vg model describing how residuals vary with distance = model
+saveRDS(OK_10, file = "/home/lmills96/Documents/GDMP/Rasters/OK_10.tif")
 
 
+# Convert the Kriging back to SpatRaster 
+  # Note: using the tidyterra package for convenience, 
+  # not because it's the only way to do this
+tester <- tidyterra::as_spatraster(OK_10, crs = crs(HFI))
+  # Note: tester["var1.pred] is returning a subset of tester with ONLY the
+  # column of "var1.pred" vs. tester$var1.pred would return a vector
+tester <- tester["var1.pred"]
+
+plot(tester)
+
+# Crop 
+tester_cropped <- tester %>%
+  terra::crop(HFI_crop, mask = T)
+
+# Match all resolution, extent, and CRS of Kriged residuals to the GAM raster
+var1_resampled <- terra::resample(tester_cropped, MP_prediction_model, 
+                                  method = "bilinear")
+
+# Save the Kriging predictions 
+writeRaster(var1_resampled, filename = "./Rasters/var1_resampled.tif", 
+            overwrite = TRUE)
+
+# Plot to visualize
+plot(var1_resampled)
+points(vg.data, col = "red", pch = 20)
+
+#----------------------------------------------------------------------
+# Combined: regression-Kriging predictions
+#----------------------------------------------------------------------
+
+# Get the regression-Kriging predictions by summing the two
+RK <- MP_prediction_model + var1_resampled
+
+# Convert back to the correct scale 
+RK <- exp(RK) 
+plot(RK)
+writeRaster(RK, filename = "./Rasters/RK_raster.tif", overwrite = TRUE)
+
+
+
+
+# -------------------------------------
 
 # Global Kriging ------------------------------------------------------
 # This is currently at 100,000 resolution (low)
@@ -230,7 +164,7 @@ grid_100000 <- st_make_grid(elev_sf, cellsize = c(100000, 100000))
 
 grid_100000_sf <- sf::st_sf(grid_100000) # as sf object rather than sfc?
 #saveRDS(grid_100000, file = "grid_100000.RDS")
-
+test_crs <- readRDS("/home/lmills96/Downloads/kriging_100000.RDS")
 # Ordinary Kriging of the residuals
 kriging_100000 <-
   krige(residuals ~ 1, # kriging the residuals = the formula
@@ -239,37 +173,3 @@ kriging_100000 <-
         model = mp.vg.fit) # gives theoretical vg model describing how residuals vary with distance = model
 # note: if you were to do universal kriging, formula would be z ~ x+y rather than z ~ 1
 #saveRDS(kriging_100000, file = "./Data/kriging_100000.RDS")
-
-
-# Convert prediction to SpatRaster (using the tidyterra package for convenience,
-# not because it's the only way to do this)
-tester <- tidyterra::as_spatraster(kriging_100000, crs = "ESRI:53018")
-tester <- tester["var1.pred"]
-# note: tester["var1.pred] is returning a subset of tester with ONLY the
-# column of "var1.pred" vs. tester$var1.pred would return a vector
-plot(tester)
-
-tester_cropped <- tester %>%
-  terra::crop(world_wintri, mask = T)
-
-# Match all resolution, extent, and CRS of Kriged residuals to MP_prediction_model raster
-var1_resampled <- terra::resample(tester_cropped, MP_prediction_model, method = "bilinear")
-#writeRaster(var1_resampled, filename = "./Rasters/var1_resampled.tif", overwrite = TRUE)
-plot(var1_resampled)
-points(vg.data, col = "red", pch = 20)
-# Currently not in the same crs?
-# var1_resampled1 <- var1_resampled
-# crs(var1_resampled1) <- crs(MP_prediction_model)
-# plot(var1_resampled1)
-
-#----------------------------------------------------------------------
-# Combined: regression-Kriging predictions
-#----------------------------------------------------------------------
-
-# Get the regression-Kriging predictions by summing the two
-RK <- MP_prediction_model + var1_resampled
-
-# Convert back to the correct scale 
-RK <- exp(RK) 
-plot(RK)
-writeRaster(RK, filename = "./Rasters/RK_raster.tif", overwrite = TRUE)
