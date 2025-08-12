@@ -24,7 +24,7 @@ require(RSQLite)
 m <- dbDriver("SQLite")  
 # Uses the driver object to open the connection to the .sqlite database file 
 # (is connecting to the dateabse so now R can run queries and read/write data)
-con <- dbConnect(m, dbname="./Scripts/HWSD2.sqlite") 
+con <- dbConnect(m, dbname="./Data/HWSD2.sqlite") 
 
 
 # Build look-up table
@@ -146,4 +146,5 @@ df <- df[,-c(9,12,13)]
 MPdf <- df
 
 # Save final dataset
+MPdf$study <- as.factor(MPdf$study)
 write.csv(MPdf, file = "./Data/MPdf.csv", row.names = FALSE)
